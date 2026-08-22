@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Dashboard tests</title>
+<script src="vendor/chart.umd.min.js"></script>
+<script src="data.js"></script>
+<script src="pm_data.js"></script>
+</head>
+<body>
+<!-- minimal DOM mirroring index.html ids required by app.js -->
+<header class="topbar"><h1>t</h1><div class="sub"><b id="asof"></b><b id="srcfile"></b></div></header>
+<nav id="nav"></nav>
+<div class="filters">
+<select id="f-year"></select><select id="f-month"></select><select id="f-client"></select>
+<select id="f-project"></select><select id="f-service"></select><select id="f-paystatus"></select>
+<select id="f-status"></select><button id="f-reset"></button>
+</div>
+<div id="kpi-main"></div><div id="kpi-delivery"></div>
+<ul id="exec-position"></ul><ul id="exec-findings"></ul><ul id="exec-risks"></ul><ul id="exec-actions"></ul>
+<div id="kpi-fin"></div><canvas id="ch-fin-bar"></canvas><div id="tbl-status"></div>
+<div id="tbl-year"></div><canvas id="ch-year-rev"></canvas><canvas id="ch-year-col"></canvas><canvas id="ch-year-vol"></canvas><canvas id="ch-year-yoy"></canvas>
+<div id="tbl-svc"></div><div id="tbl-svc-effort"></div><canvas id="ch-svc-rev"></canvas><canvas id="ch-svc-out"></canvas><canvas id="ch-svc-year"></canvas><canvas id="ch-svc-outyear"></canvas>
+<div id="tbl-client"></div><canvas id="ch-client-rev"></canvas><canvas id="ch-client-out"></canvas><canvas id="ch-client-paid"></canvas><div id="tbl-client-exposure"></div>
+<div id="tbl-project"></div><canvas id="ch-proj-val"></canvas><canvas id="ch-proj-svc"></canvas>
+<span id="pm-src"></span><input type="number" id="hourly-rate"><div id="kpi-effort"></div>
+<input id="eff-search"><select id="eff-client"></select><select id="eff-status"></select><select id="eff-scenario"></select><select id="eff-year"></select><span id="eff-count"></span>
+<div id="tbl-effort"></div><div id="tbl-pmstatus"></div><ul id="attention-list"></ul>
+<div id="kpi-recovery"></div><canvas id="ch-funnel"></canvas><canvas id="ch-funnel-hrs"></canvas><div id="tbl-matrix"></div><div id="tbl-exposure"></div>
+<canvas id="ch-est-act"></canvas><canvas id="ch-eff-year"></canvas><div id="tbl-overrun"></div><div id="tbl-eff-year"></div>
+<div id="kpi-team"></div><canvas id="ch-capacity"></canvas>
+<div id="tbl-pmrecon"></div>
+<div id="kpi-pay"></div><canvas id="ch-status-count"></canvas><canvas id="ch-status-val"></canvas><canvas id="ch-dtp"></canvas><canvas id="ch-pay-month"></canvas><canvas id="ch-pay-year"></canvas><canvas id="ch-pay-svc"></canvas>
+<span id="asof2"></span><div id="tbl-ageing"></div><canvas id="ch-age-amt"></canvas><canvas id="ch-age-cnt"></canvas><div id="tbl-oldest"></div>
+<canvas id="ch-month-main"></canvas><canvas id="ch-month-cnt"></canvas><div id="tbl-month"></div>
+<div id="kpi-repeat"></div><div id="tbl-repeat"></div><canvas id="ch-repeat"></canvas>
+<div id="tbl-dq-summary"></div><div id="tbl-dq-detail"></div><ul id="assumptions"></ul>
+<input id="inv-search"><span id="inv-count"></span><div id="tbl-invoices"></div>
+<div id="tbl-recon"></div><div id="recon-note"></div><footer id="footer"></footer>
+
+<pre id="test-results"></pre>
+<script src="app.js"></script>
+<script>
+(function () {
+  const R = [];
+  const txt = id => document.getElementById(id).textContent;
+  function setFilter(id, val) { const sel = document.getElementById(id); sel.value = val; sel.dispatchEvent(new Event("change")); }
+  function check(name, cond) { R.push((cond ? "PASS" : "FAIL") + " | " + name); }
+
+  try {
+    // --- invoice layer (regression) ---
+    check("init: total invoiced £39,049.20", txt("kpi-main").includes("£39,049.20"));
+    check("init: outstanding £6,214.80", txt("kpi-main").includes("£6,214.80"));
+    setFilter("f-year", "2025");
+    check("year=2025: invoiced £14,566.80", txt("kpi-main").includes("£14,566.80"));
+    setFilter("f-year", "All");
+    setFilter("f-client", "SUPERHOUSE (UK) LIMITED");
+    check("client=SUPERHOUSE: outstanding £1,671.60", txt("kpi-main").includes("£1,671.60"));
+    setFilter("f-client", "All");
+    setFilter("f-paystatus", "Paid");
+    check("payStatus=Paid: collected £32,834.40", txt("kpi-main").includes("£32,834.40"));
+    setFilter("f-paystatus", "All");
+
+    // --- effort layer ---
+    check("delivery KPIs: 8 dev projects", txt("kpi-delivery").includes("8"));
+    check("delivery KPIs: estimated 367h 50m", txt("kpi-delivery").includes("367h 50m"));
+    check("delivery KPIs: actual 536h 51m", txt("kpi-delivery").includes("536h 51m"));
+    check("effort KPIs: paid against dev £1,917.60", txt("kpi-effort").includes("£1,917.60"));
+    check("effort KPIs: outstanding against dev £720.00", txt("kpi-effort").includes("£720.00"));
+    check("effort KPIs: unbilled 328h 55m", txt("kpi-effort").includes("328h 55m"));
+    check("effort KPIs: unpaid invoiced 55h 47m", txt("kpi-effort").includes("55h 47m"));
+    check("recovery KPIs: unrecovered 384h 42m", txt("kpi-recovery").includes("384h 42m"));
+    check("recovery KPIs: unrecovered ≈ £3,847.00 @ £10/hr", txt("kpi-recovery").includes("£3,847.00"));
+    check("recovery KPIs: verification 30h 02m", txt("kpi-recovery").includes("30h 02m"));
+    check("effort table: Catesby Partially Paid", txt("tbl-effort").includes("Partially Paid"));
+    check("effort table: NWT Unbilled", txt("tbl-effort").includes("Unbilled"));
+    check("overrun table: NWT +64h 17m largest variance", txt("tbl-overrun").includes("64h 17m"));
+    check("attention list: NWT unbilled insight", txt("attention-list").includes("NWT"));
+    check("attention list: Catesby unpaid insight", txt("attention-list").includes("CATESBY ENGLAND"));
+    check("PM recon: Matched + Needs Verification + Unmatched present",
+      txt("tbl-pmrecon").includes("Matched") && txt("tbl-pmrecon").includes("Needs Verification") && txt("tbl-pmrecon").includes("Unmatched"));
+    check("team KPIs: team of 5, workload 402h 37m", txt("kpi-team").includes("402h 37m"));
+    check("svc-effort compare: recovery row present", txt("tbl-svc-effort").includes("Recovery %"));
+    check("funnel chart rendered", !!document.getElementById("ch-funnel").getAttribute("width"));
+    check("est-vs-act chart rendered", !!document.getElementById("ch-est-act").getAttribute("width"));
+
+    // rate configurability
+    const ri = document.getElementById("hourly-rate");
+    ri.value = "20"; ri.dispatchEvent(new Event("input"));
+    check("rate=£20: unrecovered ≈ £7,694.00", txt("kpi-recovery").includes("£7,694.00"));
+    ri.value = "10"; ri.dispatchEvent(new Event("input"));
+    check("rate back to £10", txt("kpi-recovery").includes("£3,847.00"));
+
+    // effort filters
+    setFilter("eff-client", "NOMADS CLOTHING LIMITED");
+    check("eff filter client=Nomads: 4 projects", txt("eff-count").startsWith("4 of 8"));
+    setFilter("eff-client", "All");
+    setFilter("eff-scenario", "Unbilled");
+    check("eff filter scenario=Unbilled: 5 projects", txt("eff-count").startsWith("5 of 8"));
+    setFilter("eff-scenario", "All");
+    setFilter("eff-year", "2025");
+    check("eff filter year=2025: 1 project (Trade Website)", txt("eff-count").startsWith("1 of 8"));
+    setFilter("eff-year", "All");
+
+    // reconciliation incl. PM rows
+    check("recon: PM logged-time delta noted", txt("tbl-recon").includes("536h 53m (reported)"));
+    check("recon: PM unbilled row present", txt("tbl-recon").includes("328h 55m"));
+
+    // DQ dev checks
+    check("DQ: dev overrun check present", txt("tbl-dq-summary").includes("DEV: Actual hours significantly over estimate"));
+    check("DQ: status anomaly (Not Started w/ hours)", txt("tbl-dq-summary").includes("AMEN SHOES"));
+  } catch (e) {
+    R.push("ERROR | " + e.message);
+  }
+  document.getElementById("test-results").textContent = "TESTRESULTS\n" + R.join("\n") + "\nENDRESULTS";
+})();
+</script>
+</body>
+</html>

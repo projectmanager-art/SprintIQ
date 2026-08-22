@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SprintIQ | Sprint Retrospective &amp; Resource Intelligence Platform</title>
+  
+  <!-- Google Fonts: Afacad -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Afacad:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/theme.css">
+  
+  <!-- Vendor Libraries -->
+  <script src="vendor/xlsx.full.min.js"></script>
+  <script src="vendor/chart.umd.min.js"></script>
+  <script src="vendor/jspdf.umd.min.js"></script>
+  <script src="vendor/pptxgen.bundle.js"></script>
+  <script src="vendor/lucide.min.js"></script>
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- LEFT SIDEBAR -->
+    <aside id="app-sidebar" class="sidebar">
+      <div class="sidebar-brand">
+        <div>
+          <div class="brand-title">Sprint<span>IQ</span></div>
+          <div class="brand-subtitle">Resource Intelligence</div>
+        </div>
+      </div>
+
+      <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle Navigation">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </button>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">Navigation</div>
+        
+        <a class="nav-link active" data-view="view-overview">
+          <i data-lucide="layout-dashboard"></i> Overview
+        </a>
+        <a class="nav-link" data-view="view-sprint-analysis">
+          <i data-lucide="trending-up"></i> Sprint Analysis
+        </a>
+        <a class="nav-link" data-view="view-employee-rag">
+          <i data-lucide="users"></i> Employee RAG
+        </a>
+        <a class="nav-link" data-view="view-workload">
+          <i data-lucide="bar-chart-3"></i> Workload &amp; Capacity
+        </a>
+        <a class="nav-link" data-view="view-task-analysis">
+          <i data-lucide="check-square"></i> Task Analysis
+        </a>
+        <a class="nav-link" data-view="view-projects">
+          <i data-lucide="folder-kanban"></i> Projects / Clients
+        </a>
+        <a class="nav-link" data-view="view-risks">
+          <i data-lucide="alert-triangle"></i> Risks &amp; Blockers
+        </a>
+        <a class="nav-link" data-view="view-retrospective">
+          <i data-lucide="sparkles"></i> Retrospective
+        </a>
+
+        <div class="nav-section-title">Management</div>
+        
+        <a class="nav-link" data-view="view-comparison">
+          <i data-lucide="git-compare"></i> Sprint Comparison
+        </a>
+        <a class="nav-link" data-view="view-reports">
+          <i data-lucide="file-text"></i> Reports &amp; Exports
+        </a>
+        <a class="nav-link" data-view="view-settings">
+          <i data-lucide="sliders-horizontal"></i> RAG Settings
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="sprint-badge-pill">
+          <span id="sidebar-sprint-name">Sprint 14 (Active)</span>
+          <div class="sprint-status-dot" id="sidebar-status-dot"></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      
+      <!-- TOP NAVBAR -->
+      <header class="top-navbar">
+        <div class="top-left-group">
+          <div class="sprint-select-wrapper">
+            <span style="font-size: 12px; color: var(--text-muted); font-weight: 600;">ACTIVE SPRINT:</span>
+            <select id="active-sprint-select" class="select-control">
+              <!-- Dynamically populated -->
+            </select>
+          </div>
+          <button class="btn btn-primary btn-sm" id="btn-open-upload">
+            <i data-lucide="upload-cloud"></i> Upload Sprint Excel
+          </button>
+        </div>
+
+        <div class="top-right-group">
+          <div style="position: relative;">
+            <input type="text" id="global-search-input" class="filter-input" placeholder="Search tasks, owners, projects..." style="width: 220px;">
+          </div>
+          <button class="btn btn-secondary btn-sm" id="btn-quick-export-pdf">
+            <i data-lucide="download"></i> Export PDF
+          </button>
+          <button class="btn btn-secondary btn-sm" id="btn-quick-export-excel">
+            <i data-lucide="table"></i> Export Excel
+          </button>
+          <button class="btn btn-secondary btn-sm" id="btn-quick-export-pptx">
+            <i data-lucide="presentation"></i> PPT
+          </button>
+        </div>
+      </header>
+
+      <!-- GLOBAL FILTER TOOLBAR -->
+      <section class="filter-toolbar">
+        <div class="filter-chip-group">
+          <span class="filter-label">Owner:</span>
+          <select id="filter-owner" class="filter-input">
+            <option value="">All Employees</option>
+          </select>
+        </div>
+
+        <div class="filter-chip-group">
+          <span class="filter-label">Project:</span>
+          <select id="filter-project" class="filter-input">
+            <option value="">All Projects</option>
+          </select>
+        </div>
+
+        <div class="filter-chip-group">
+          <span class="filter-label">Priority:</span>
+          <select id="filter-priority" class="filter-input">
+            <option value="">All Priorities</option>
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
+          </select>
+        </div>
+
+        <div class="filter-chip-group">
+          <span class="filter-label">Status:</span>
+          <select id="filter-status" class="filter-input">
+            <option value="">All Statuses</option>
+            <option value="Completed">Completed</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Pending">Pending</option>
+            <option value="Blocked">Blocked</option>
+          </select>
+        </div>
+
+        <div class="filter-chip-group">
+          <span class="filter-label">RAG:</span>
+          <select id="filter-rag" class="filter-input">
+            <option value="">All RAG</option>
+            <option value="GREEN">GREEN</option>
+            <option value="AMBER">AMBER</option>
+            <option value="RED">RED</option>
+          </select>
+        </div>
+
+        <button class="btn btn-secondary btn-sm" id="btn-reset-filters" style="margin-left: auto;">
+          <i data-lucide="rotate-ccw"></i> Reset Filters
+        </button>
+        <span id="filtered-count-badge" style="font-size: 11.5px; color: var(--text-muted);">Showing 24 tasks</span>
+      </section>
+
+      <!-- PAGE BODY (VIEWS) -->
+      <div class="page-body">
+
+        <!-- ================= VIEW 1: OVERVIEW DASHBOARD ================= -->
+        <div id="view-overview" class="view-panel">
+          
+          <!-- Executive Management Banner -->
+          <div class="executive-banner">
+            <div style="flex: 1;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                <h2 style="font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 10px;">
+                  <i data-lucide="shield-alert" style="color: var(--accent-red); width: 24px; height: 24px;"></i> Executive Management Summary
+                </h2>
+                <div id="overview-rag-badge" class="banner-badge badge-green">SPRINT RAG: GREEN (Score: 92)</div>
+              </div>
+              <p id="overview-executive-text" style="font-size: 13.5px; color: var(--text-secondary); line-height: 1.6; white-space: pre-line;">
+                Loading executive intelligence summary...
+              </p>
+            </div>
+          </div>
+
+          <!-- Top KPI Cards Grid -->
+          <div class="kpi-grid" style="margin-top: 20px;">
+            <div class="kpi-card">
+              <div class="kpi-header">
+                <span class="kpi-label">Total Deliverables</span>
+                <i data-lucide="check-circle-2" class="kpi-icon"></i>
+              </div>
+              <div class="kpi-value" id="kpi-total-tasks">24</div>
+              <div class="kpi-subtext" id="kpi-tasks-breakdown">19 Completed · 3 In Progress · 1 Blocked</div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-header">
+                <span class="kpi-label">Completion Rate</span>
+                <i data-lucide="percent" class="kpi-icon"></i>
+              </div>
+              <div class="kpi-value" id="kpi-completion-pct" style="color: var(--rag-green);">79.2%</div>
+              <div class="kpi-subtext" id="kpi-completion-target">Target: 90% | Delivery Health: Amber</div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-header">
+                <span class="kpi-label">Effort Logged</span>
+                <i data-lucide="clock" class="kpi-icon"></i>
+              </div>
+              <div class="kpi-value" id="kpi-actual-hours">388.5h</div>
+              <div class="kpi-subtext" id="kpi-est-hours">Planned: 367.0h (+21.5h net variance)</div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-header">
+                <span class="kpi-label">Sprint Efficiency</span>
+                <i data-lucide="zap" class="kpi-icon"></i>
+              </div>
+              <div class="kpi-value" id="kpi-efficiency-pct" style="color: var(--rag-amber);">94.5%</div>
+              <div class="kpi-subtext">Est vs Actual Effort Performance</div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-header">
+                <span class="kpi-label">Active Team</span>
+                <i data-lucide="users" class="kpi-icon"></i>
+              </div>
+              <div class="kpi-value" id="kpi-team-size">9</div>
+              <div class="kpi-subtext" id="kpi-team-avg">Avg Effort: 43.2h / employee</div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-header">
+                <span class="kpi-label">Imbalance Score</span>
+                <i data-lucide="scale" class="kpi-icon"></i>
+              </div>
+              <div class="kpi-value" id="kpi-imbalance-score">22%</div>
+              <div class="kpi-subtext" id="kpi-imbalance-subtext">Healthy Team Load Distribution</div>
+            </div>
+          </div>
+
+          <!-- Charts Row 1: Status Donut & Workload Bar -->
+          <div class="grid-2" style="margin-top: 20px;">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><i data-lucide="pie-chart"></i> Sprint Task Distribution</div>
+                <span style="font-size: 11.5px; color: var(--text-muted);">By Task Status</span>
+              </div>
+              <div class="card-body" style="height: 280px;">
+                <canvas id="chart-overview-status"></canvas>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><i data-lucide="bar-chart-3"></i> Employee Workload (Est vs Act)</div>
+                <span style="font-size: 11.5px; color: var(--text-muted);">Hours Logged by Developer</span>
+              </div>
+              <div class="card-body" style="height: 280px;">
+                <canvas id="chart-overview-workload"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts Row 2: Priority Breakdown & Top Projects -->
+          <div class="grid-2" style="margin-top: 20px;">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><i data-lucide="layers"></i> Priority vs Hours Consumption</div>
+                <span style="font-size: 11.5px; color: var(--text-muted);">High / Med / Low Allocation</span>
+              </div>
+              <div class="card-body" style="height: 260px;">
+                <canvas id="chart-overview-priority"></canvas>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><i data-lucide="folder-kanban"></i> Top Client / Project Effort</div>
+                <span style="font-size: 11.5px; color: var(--text-muted);">Actual Hours Consumed</span>
+              </div>
+              <div class="card-body" style="height: 260px;">
+                <canvas id="chart-overview-projects"></canvas>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ================= VIEW 2: SPRINT ANALYSIS ================= -->
+        <div id="view-sprint-analysis" class="view-panel" style="display: none;">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i data-lucide="trending-up"></i> Sprint Execution &amp; Estimation Accuracy Deep-Dive</div>
+            </div>
+            <div class="card-body">
+              <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
+                Comprehensive evaluation of delivery velocity, story-point adherence, priority allocation, and variance dynamics.
+              </p>
+              
+              <div class="grid-3">
+                <div class="kpi-card">
+                  <span class="kpi-label">High Priority Delivered</span>
+                  <div class="kpi-value" id="analysis-high-delivered">8 / 10</div>
+                  <div class="kpi-subtext">80.0% High Priority Success Rate</div>
+                </div>
+                <div class="kpi-card">
+                  <span class="kpi-label">Overrun Tasks (&gt; 20%)</span>
+                  <div class="kpi-value" id="analysis-overrun-count" style="color: var(--accent-red);">4</div>
+                  <div class="kpi-subtext">Total Overrun Effort: +34.5h</div>
+                </div>
+                <div class="kpi-card">
+                  <span class="kpi-label">On-Time Tasks</span>
+                  <div class="kpi-value" id="analysis-ontime-count" style="color: var(--rag-green);">17</div>
+                  <div class="kpi-subtext">Within Planned Estimate Target</div>
+                </div>
+              </div>
+
+              <div style="margin-top: 24px;">
+                <h3 style="font-size: 14px; font-weight: 700; margin-bottom: 12px; color: var(--text-primary);">Priority Breakdown Matrix</h3>
+                <div class="data-table-wrapper">
+                  <table class="data-table" id="priority-analysis-table">
+                    <thead>
+                      <tr>
+                        <th>Priority</th>
+                        <th>Tasks</th>
+                        <th>Completed</th>
+                        <th>Completion %</th>
+                        <th>Est Hours</th>
+                        <th>Act Hours</th>
+                        <th>Variance (h)</th>
+                        <th>Variance %</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= VIEW 3: EMPLOYEE RAG ================= -->
+        <div id="view-employee-rag" class="view-panel" style="display: none;">
+          
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+            <div>
+              <h2 style="font-size: 18px; font-weight: 800; color: var(--text-primary);">Employee Performance &amp; RAG Intelligence</h2>
+              <p style="font-size: 12.5px; color: var(--text-secondary);">
+                Transparent multi-dimensional evaluation (Delivery, Effort, Priority, Workload, Risk) calibrated without unfair raw-hour bias.
+              </p>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-secondary btn-sm" id="btn-toggle-emp-view">
+                <i data-lucide="layout-grid"></i> Toggle Cards / Table
+              </button>
+            </div>
+          </div>
+
+          <!-- Employee Cards Grid -->
+          <div id="emp-cards-container" class="employee-card-grid"></div>
+
+          <!-- Employee Full Matrix Table -->
+          <div id="emp-table-container" class="card" style="margin-top: 20px; display: none;">
+            <div class="card-header">
+              <div class="card-title"><i data-lucide="table"></i> Detailed Employee RAG Matrix</div>
+            </div>
+            <div class="card-body data-table-wrapper">
+              <table class="data-table" id="emp-matrix-table">
+                <thead>
+                  <tr>
+                    <th>Employee</th>
+                    <th>RAG</th>
+                    <th>Score</th>
+                    <th>Assigned</th>
+                    <th>Done</th>
+                    <th>Prog / Blk</th>
+                    <th>Completion %</th>
+                    <th>Est (h)</th>
+                    <th>Act (h)</th>
+                    <th>Var (h)</th>
+                    <th>Eff %</th>
+                    <th>Workload</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ================= VIEW 4: WORKLOAD & CAPACITY ================= -->
+        <div id="view-workload" class="view-panel" style="display: none;">
+          
+          <div class="kpi-grid" style="margin-bottom: 20px;">
+            <div class="kpi-card">
+              <span class="kpi-label">Team Total Logged</span>
+              <div class="kpi-value" id="wl-total-hours">388.5h</div>
+              <div class="kpi-subtext">Aggregate Sprint Capacity</div>
+            </div>
+            <div class="kpi-card">
+              <span class="kpi-label">Team Average Hours</span>
+              <div class="kpi-value" id="wl-avg-hours">43.2h</div>
+              <div class="kpi-subtext">Baseline per Developer</div>
+            </div>
+            <div class="kpi-card">
+              <span class="kpi-label">Peak Workload</span>
+              <div class="kpi-value" id="wl-max-hours" style="color: var(--accent-red);">72.5h</div>
+              <div class="kpi-subtext" id="wl-max-owner">Max: Avinash</div>
+            </div>
+            <div class="kpi-card">
+              <span class="kpi-label">Workload Imbalance</span>
+              <div class="kpi-value" id="wl-imbalance-pct">22%</div>
+              <div class="kpi-subtext">Std Dev / Mean Ratio</div>
+            </div>
+          </div>
+
+          <div class="grid-3" style="margin-bottom: 20px;">
+            <div class="card" style="border-left: 3px solid var(--rag-amber);">
+              <div class="card-header">
+                <div class="card-title" style="font-size: 13.5px;"><i data-lucide="trending-down"></i> Underloaded (&lt; 70% Avg)</div>
+              </div>
+              <div class="card-body" id="wl-underloaded-list" style="font-size: 13px; display: flex; flex-direction: column; gap: 8px;"></div>
+            </div>
+
+            <div class="card" style="border-left: 3px solid var(--rag-green);">
+              <div class="card-header">
+                <div class="card-title" style="font-size: 13.5px;"><i data-lucide="check"></i> Balanced (70% - 130%)</div>
+              </div>
+              <div class="card-body" id="wl-balanced-list" style="font-size: 13px; display: flex; flex-direction: column; gap: 8px;"></div>
+            </div>
+
+            <div class="card" style="border-left: 3px solid var(--accent-red);">
+              <div class="card-header">
+                <div class="card-title" style="font-size: 13.5px;"><i data-lucide="alert-circle"></i> Overloaded (&gt; 130% Avg)</div>
+              </div>
+              <div class="card-body" id="wl-overloaded-list" style="font-size: 13px; display: flex; flex-direction: column; gap: 8px;"></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i data-lucide="bar-chart-2"></i> Employee Capacity &amp; Hours Logged</div>
+            </div>
+            <div class="card-body" style="height: 320px;">
+              <canvas id="chart-workload-detailed"></canvas>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ================= VIEW 5: TASK ANALYSIS ================= -->
+        <div id="view-task-analysis" class="view-panel" style="display: none;">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i data-lucide="list-checks"></i> Complete Sprint Task &amp; Variance Register</div>
+              <span id="task-table-count" style="font-size: 12px; color: var(--text-muted);">24 tasks</span>
+            </div>
+            <div class="card-body">
+              <div class="data-table-wrapper">
+                <table class="data-table" id="task-analysis-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Task / Deliverable</th>
+                      <th>Priority</th>
+                      <th>Owner</th>
+                      <th>Est (h)</th>
+                      <th>Act (h)</th>
+                      <th>Variance (h)</th>
+                      <th>Variance %</th>
+                      <th>Status</th>
+                      <th>Risk State</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+              <div class="pagination-bar" id="task-pagination-bar" style="display: none;">
+                <span id="task-pagination-info" style="font-size: 13px; color: var(--text-secondary);">Page 1 of 3</span>
+                <div style="display: flex; gap: 8px;">
+                  <button class="btn btn-secondary btn-sm" id="btn-task-prev" disabled>
+                    <i data-lucide="chevron-left"></i> Previous
+                  </button>
+                  <button class="btn btn-secondary btn-sm" id="btn-task-next" disabled>
+                    Next <i data-lucide="chevron-right"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= VIEW 6: PROJECTS / CLIENTS ================= -->
+        <div id="view-projects" class="view-panel" style="display: none;">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i data-lucide="folder-kanban"></i> Client Accounts &amp; Project Resource Consumption</div>
+            </div>
+            <div class="card-body data-table-wrapper">
+              <table class="data-table" id="projects-table">
+                <thead>
+                  <tr>
+                    <th>Project / Client Name</th>
+                    <th>Tasks</th>
+                    <th>Done</th>
+                    <th>Completion %</th>
+                    <th>Est (h)</th>
+                    <th>Act (h)</th>
+                    <th>Variance (h)</th>
+                    <th>RAG</th>
+                    <th>Assigned Team</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <div class="pagination-bar" id="project-pagination-bar" style="display: none;">
+              <span id="project-pagination-info" style="font-size: 13px; color: var(--text-secondary);">Page 1 of 1</span>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-secondary btn-sm" id="btn-project-prev" disabled>
+                  <i data-lucide="chevron-left"></i> Previous
+                </button>
+                <button class="btn btn-secondary btn-sm" id="btn-project-next" disabled>
+                  Next <i data-lucide="chevron-right"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= VIEW 7: RISKS & BLOCKERS ================= -->
+        <div id="view-risks" class="view-panel" style="display: none;">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i data-lucide="shield-alert"></i> Sprint Risk Register &amp; Active Blockers</div>
+            </div>
+            <div class="card-body data-table-wrapper">
+              <table class="data-table" id="risks-table">
+                <thead>
+                  <tr>
+                    <th>Risk ID</th>
+                    <th>Type</th>
+                    <th>Task / Resource</th>
+                    <th>Owner</th>
+                    <th>Priority</th>
+                    <th>Impact</th>
+                    <th>Severity</th>
+                    <th>RAG</th>
+                    <th>Recommended Mitigation Action</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= VIEW 8: RETROSPECTIVE ================= -->
+        <div id="view-retrospective" class="view-panel" style="display: none;">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i data-lucide="sparkles"></i> AI-Generated Sprint Retrospective</div>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-secondary btn-sm" id="btn-copy-retro">
+                  <i data-lucide="copy"></i> Copy Retrospective
+                </button>
+              </div>
+            </div>
+            <div class="card-body" style="display: flex; flex-direction: column; gap: 20px;">
+              
+              <!-- Section 1: Executive Summary -->
+              <div class="retro-box">
+                <h3 style="font-size: 15px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                  <i data-lucide="file-text" style="color: var(--accent-red);"></i> 1. Executive Summary
+                </h3>
+                <p id="retro-summary-text" style="font-size: 13.5px; color: var(--text-secondary); line-height: 1.6; white-space: pre-line;"></p>
+              </div>
+
+              <!-- Section 2: What Went Well & What Didn't -->
+              <div class="grid-2">
+                <div class="retro-box" style="border-top: 3px solid var(--rag-green);">
+                  <h3 style="font-size: 14.5px; font-weight: 700; color: var(--rag-green); display: flex; align-items: center; gap: 8px;">
+                    <i data-lucide="thumbs-up"></i> What Went Well
+                  </h3>
+                  <ul class="retro-list" id="retro-went-well-list"></ul>
+                </div>
+
+                <div class="retro-box" style="border-top: 3px solid var(--accent-red);">
+                  <h3 style="font-size: 14.5px; font-weight: 700; color: var(--accent-red); display: flex; align-items: center; gap: 8px;">
+                    <i data-lucide="thumbs-down"></i> What Did Not Go Well &amp; Bottlenecks
+                  </h3>
+                  <ul class="retro-list" id="retro-not-well-list"></ul>
+                </div>
+              </div>
+
+              <!-- Section 3: Key Achievements & Recommendations -->
+              <div class="grid-2">
+                <div class="retro-box">
+                  <h3 style="font-size: 14.5px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                    <i data-lucide="award" style="color: var(--rag-amber);"></i> Key Sprint Achievements
+                  </h3>
+                  <ul class="retro-list" id="retro-achievements-list"></ul>
+                </div>
+
+                <div class="retro-box">
+                  <h3 style="font-size: 14.5px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                    <i data-lucide="lightbulb" style="color: var(--accent-red);"></i> Recommended Process Improvements
+                  </h3>
+                  <ul class="retro-list" id="retro-recommendations-list"></ul>
+                </div>
+              </div>
+
+              <!-- Section 4: Next Sprint Action Items -->
+              <div class="retro-box">
+                <h3 style="font-size: 15px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                  <i data-lucide="list-todo" style="color: var(--accent-red);"></i> Next Sprint Action Items
+                </h3>
+                <div class="data-table-wrapper" style="margin-top: 10px;">
+                  <table class="data-table" id="retro-actions-table">
+                    <thead>
+                      <tr>
+                        <th>Action Item</th>
+                        <th>Owner</th>
+                        <th>Priority</th>
+                        <th>Expected Outcome</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= VIEW 9: SPRINT COMPARISON ================= -->
+        <div id="view-comparison" class="view-panel" style="display: none;">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i data-lucide="git-compare"></i> Sprint-over-Sprint Trend &amp; Performance Comparison</div>
+            </div>
+            <div class="card-body">
+              <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">
+                Evaluate multi-sprint progress across completion velocity, hours spent, and team efficiency trends.
+              </p>
+
+              <div style="height: 320px; margin-bottom: 24px;">
+                <canvas id="chart-sprint-trend"></canvas>
+              </div>
+
+              <div class="data-table-wrapper">
+                <table class="data-table" id="comparison-matrix-table">
+                  <thead>
+                    <tr>
+                      <th>Sprint</th>
+                      <th>Dates</th>
+                      <th>Status</th>
+                      <th>RAG</th>
+                      <th>Tasks</th>
+                      <th>Completion %</th>
+                      <th>Est (h)</th>
+                      <th>Act (h)</th>
+                      <th>Variance</th>
+                      <th>Efficiency %</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= VIEW 10: REPORTS & EXPORTS ================= -->
+        <div id="view-reports" class="view-panel" style="display: none;">
+          <div class="grid-2">
+            
+            <!-- Report Settings & Metadata -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><i data-lucide="settings-2"></i> Report Customizer &amp; Metadata</div>
+              </div>
+              <div class="card-body" style="display: flex; flex-direction: column; gap: 14px;">
+                <div>
+                  <label class="filter-label" style="display: block; margin-bottom: 4px;">Company / Organization Name</label>
+                  <input type="text" id="report-meta-company" class="filter-input" style="width: 100%;" value="Software &amp; Web Development PMO">
+                </div>
+                <div>
+                  <label class="filter-label" style="display: block; margin-bottom: 4px;">Department</label>
+                  <input type="text" id="report-meta-dept" class="filter-input" style="width: 100%;" value="Digital Delivery &amp; Engineering">
+                </div>
+                <div>
+                  <label class="filter-label" style="display: block; margin-bottom: 4px;">Prepared By</label>
+                  <input type="text" id="report-meta-author" class="filter-input" style="width: 100%;" value="Lead Project Manager">
+                </div>
+                <div>
+                  <label class="filter-label" style="display: block; margin-bottom: 4px;">Report Title</label>
+                  <input type="text" id="report-meta-title" class="filter-input" style="width: 100%;" value="Executive Sprint Retrospective &amp; RAG Report">
+                </div>
+
+                <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px;">
+                  <button class="btn btn-primary" id="btn-generate-pdf-full">
+                    <i data-lucide="file-down"></i> Download Management PDF Report
+                  </button>
+                  <button class="btn btn-secondary" id="btn-generate-excel-full">
+                    <i data-lucide="table"></i> Download Multi-Sheet Excel (.xlsx)
+                  </button>
+                  <button class="btn btn-secondary" id="btn-generate-pptx-full">
+                    <i data-lucide="presentation"></i> Download PowerPoint Presentation (.pptx)
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Report Live Preview Summary -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><i data-lucide="eye"></i> Report Structure Preview</div>
+              </div>
+              <div class="card-body" style="font-size: 13px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 10px;">
+                <div style="padding: 10px; background: var(--bg-input); border-radius: 6px;">
+                  <strong>Included Sections:</strong>
+                  <ul style="margin-top: 6px; padding-left: 20px; line-height: 1.6;">
+                    <li>1. Executive Management Summary &amp; Health Gauge</li>
+                    <li>2. Sprint Key Performance Indicators (KPIs)</li>
+                    <li>3. Employee-Wise RAG &amp; Performance Scores</li>
+                    <li>4. Workload Imbalance &amp; Capacity Distribution</li>
+                    <li>5. Client &amp; Project Resource Consumption</li>
+                    <li>6. Sprint Risk Register &amp; High-Priority Blocker Triage</li>
+                    <li>7. Retrospective: What Went Well &amp; What Did Not</li>
+                    <li>8. Action Items &amp; Next Sprint Recommendations</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ================= VIEW 11: SETTINGS ================= -->
+        <div id="view-settings" class="view-panel" style="display: none;">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i data-lucide="sliders"></i> RAG &amp; Workload Threshold Configuration</div>
+              <button class="btn btn-secondary btn-sm" id="btn-reset-settings">
+                <i data-lucide="rotate-ccw"></i> Reset Defaults
+              </button>
+            </div>
+            <div class="card-body" style="display: flex; flex-direction: column; gap: 20px;">
+              
+              <!-- Scoring Weights -->
+              <div>
+                <h3 style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 10px;">
+                  Employee Scoring Dimension Weights (Must Sum to 100%)
+                </h3>
+                <div class="grid-3">
+                  <div>
+                    <label class="filter-label">Delivery Weight (%)</label>
+                    <input type="number" id="weight-delivery" class="filter-input" style="width: 100%;" value="30">
+                  </div>
+                  <div>
+                    <label class="filter-label">Effort / Variance Weight (%)</label>
+                    <input type="number" id="weight-effort" class="filter-input" style="width: 100%;" value="25">
+                  </div>
+                  <div>
+                    <label class="filter-label">Priority Weight (%)</label>
+                    <input type="number" id="weight-priority" class="filter-input" style="width: 100%;" value="20">
+                  </div>
+                  <div>
+                    <label class="filter-label">Workload Balance Weight (%)</label>
+                    <input type="number" id="weight-workload" class="filter-input" style="width: 100%;" value="15">
+                  </div>
+                  <div>
+                    <label class="filter-label">Risk Deduction Weight (%)</label>
+                    <input type="number" id="weight-risk" class="filter-input" style="width: 100%;" value="10">
+                  </div>
+                </div>
+              </div>
+
+              <!-- RAG Score Thresholds -->
+              <div style="border-top: 1px solid var(--border-subtle); padding-top: 16px;">
+                <h3 style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 10px;">
+                  RAG Classification Thresholds (Score 0 - 100)
+                </h3>
+                <div class="grid-2">
+                  <div>
+                    <label class="filter-label">Green Minimum Score</label>
+                    <input type="number" id="rag-green-min" class="filter-input" style="width: 100%;" value="85">
+                  </div>
+                  <div>
+                    <label class="filter-label">Amber Minimum Score</label>
+                    <input type="number" id="rag-amber-min" class="filter-input" style="width: 100%;" value="65">
+                  </div>
+                </div>
+              </div>
+
+              <div style="display: flex; justify-content: flex-end;">
+                <button class="btn btn-primary" id="btn-save-settings">
+                  <i data-lucide="save"></i> Save Configuration
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ================= UPLOAD SPRINT MODAL ================= -->
+  <div class="modal-overlay" id="modal-upload">
+    <div class="modal-box" style="max-width: 750px;">
+      <div class="modal-header">
+        <div class="modal-title" style="display: flex; align-items: center; gap: 8px;">
+          <i data-lucide="upload-cloud" style="color: var(--accent-red);"></i> Import Sprint Excel / CSV
+        </div>
+        <button class="modal-close" id="modal-upload-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Dropzone -->
+        <div class="dropzone" id="upload-dropzone">
+          <i data-lucide="file-spreadsheet" class="dropzone-icon"></i>
+          <div>
+            <strong style="font-size: 15px; color: var(--text-primary);">Drag &amp; Drop Sprint File (.xlsx, .xls, .csv)</strong>
+            <p style="font-size: 12.5px; color: var(--text-muted); margin-top: 4px;">or click to browse from your computer</p>
+          </div>
+          <input type="file" id="upload-file-input" accept=".xlsx,.xls,.csv" style="display: none;">
+        </div>
+
+        <!-- Detected Mapping & Configuration (Hidden until file selected) -->
+        <div id="upload-mapping-section" style="display: none; flex-direction: column; gap: 14px;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <strong style="font-size: 13.5px; color: var(--text-primary);">Column Auto-Mapping &amp; Verification</strong>
+            <span id="upload-file-name" style="font-size: 12px; color: var(--text-muted);">file.xlsx</span>
+          </div>
+
+          <div class="grid-3" style="gap: 10px;">
+            <div>
+              <label class="filter-label">Task / Item Name *</label>
+              <select id="map-col-item" class="select-control" style="width: 100%;"></select>
+            </div>
+            <div>
+              <label class="filter-label">Owner / Assignee *</label>
+              <select id="map-col-owner" class="select-control" style="width: 100%;"></select>
+            </div>
+            <div>
+              <label class="filter-label">Priority</label>
+              <select id="map-col-priority" class="select-control" style="width: 100%;"></select>
+            </div>
+            <div>
+              <label class="filter-label">Estimated Hours (hrs)</label>
+              <select id="map-col-est" class="select-control" style="width: 100%;"></select>
+            </div>
+            <div>
+              <label class="filter-label">Actual Hours (hrs)</label>
+              <select id="map-col-act" class="select-control" style="width: 100%;"></select>
+            </div>
+            <div>
+              <label class="filter-label">Status</label>
+              <select id="map-col-status" class="select-control" style="width: 100%;"></select>
+            </div>
+          </div>
+
+          <!-- Validation Feedback Box -->
+          <div id="upload-validation-box" style="padding: 12px 14px; background: var(--bg-input); border-radius: 8px; font-size: 12.5px; color: var(--text-secondary);">
+            Checking data integrity...
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="modal-upload-cancel">Cancel</button>
+        <button class="btn btn-primary" id="modal-upload-confirm" disabled>
+          <i data-lucide="check"></i> Confirm &amp; Analyze Sprint
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= EMPLOYEE DRILL-DOWN MODAL ================= -->
+  <div class="modal-overlay" id="modal-employee-detail">
+    <div class="modal-box" style="max-width: 850px;">
+      <div class="modal-header">
+        <div class="modal-title" id="modal-emp-name" style="display: flex; align-items: center; gap: 10px;">
+          Employee Intelligence Detail
+        </div>
+        <button class="modal-close" id="modal-emp-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Employee Top Header -->
+        <div style="display: flex; align-items: center; justify-content: space-between; background: var(--bg-card-header); padding: 16px; border-radius: 10px; border: 1px solid var(--border-subtle);">
+          <div>
+            <div id="modal-emp-rag-pill" class="banner-badge badge-green">GREEN (Score: 92)</div>
+            <div id="modal-emp-workload-tag" style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">Balanced Workload · 43.2h Logged</div>
+          </div>
+          <div style="display: flex; gap: 20px; text-align: right;">
+            <div>
+              <div style="font-size: 11px; color: var(--text-muted);">TASKS</div>
+              <div id="modal-emp-tasks-stat" style="font-size: 18px; font-weight: 800;">6 / 6</div>
+            </div>
+            <div>
+              <div style="font-size: 11px; color: var(--text-muted);">EFFICIENCY</div>
+              <div id="modal-emp-eff-stat" style="font-size: 18px; font-weight: 800; color: var(--rag-green);">108%</div>
+            </div>
+            <div>
+              <div style="font-size: 11px; color: var(--text-muted);">VARIANCE</div>
+              <div id="modal-emp-var-stat" style="font-size: 18px; font-weight: 800;">-3.5h</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Observations -->
+        <div class="retro-box">
+          <strong style="font-size: 13.5px; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
+            <i data-lucide="sparkles" style="color: var(--accent-red);"></i> AI Management Observation
+          </strong>
+          <p id="modal-emp-observation" style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;"></p>
+          <div style="font-size: 12.5px; color: var(--rag-green); margin-top: 4px;">
+            <strong>Recommended Action:</strong> <span id="modal-emp-recommendation" style="color: var(--text-secondary);"></span>
+          </div>
+        </div>
+
+        <!-- Employee Tasks Chart -->
+        <div style="height: 220px;">
+          <canvas id="chart-employee-tasks"></canvas>
+        </div>
+
+        <!-- Assigned Tasks Table -->
+        <div>
+          <h4 style="font-size: 13.5px; font-weight: 700; margin-bottom: 8px;">Assigned Sprint Tasks</h4>
+          <div class="data-table-wrapper">
+            <table class="data-table" id="modal-emp-tasks-table">
+              <thead>
+                <tr>
+                  <th>Task</th>
+                  <th>Priority</th>
+                  <th>Est (h)</th>
+                  <th>Act (h)</th>
+                  <th>Variance</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="modal-emp-close-btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Application Logic Scripts -->
+  <script src="js/config.js"></script>
+  <script src="js/sample_data.js"></script>
+  <script src="js/parser.js"></script>
+  <script src="js/analytics.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/exports.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>

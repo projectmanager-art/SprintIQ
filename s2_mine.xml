@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+ <p:cSld><p:spTree>
+  <p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>
+  <p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr>
+  <p:sp>
+ <p:nvSpPr><p:cNvPr id="70" name="titlebar"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+ <p:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="12191695" cy="777240"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:solidFill><a:srgbClr val="0F172A"/></a:solidFill><a:ln><a:noFill/></a:ln></p:spPr>
+ <p:txBody><a:bodyPr wrap="square" anchor="t" lIns="73152" tIns="36576" rIns="73152" bIns="36576"/><a:lstStyle/><a:p/></p:txBody>
+</p:sp><p:sp>
+ <p:nvSpPr><p:cNvPr id="71" name="title"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+ <p:spPr><a:xfrm><a:off x="411480" y="54864"/><a:ext cx="11338560" cy="713232"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/><a:ln><a:noFill/></a:ln></p:spPr>
+ <p:txBody><a:bodyPr wrap="square" anchor="ctr" lIns="73152" tIns="36576" rIns="73152" bIns="36576"/><a:lstStyle/><a:p><a:pPr algn="l"><a:spcAft><a:spcPts val="100"/></a:spcAft></a:pPr><a:r><a:rPr lang="en-GB" sz="950" b="1"><a:solidFill><a:srgbClr val="93C5FD"/></a:solidFill><a:latin typeface="Segoe UI"/></a:rPr><a:t>OVERALL POSITION</a:t></a:r></a:p><a:p><a:pPr algn="l"></a:pPr><a:r><a:rPr lang="en-GB" sz="2100" b="1"><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill><a:latin typeface="Segoe UI"/></a:rPr><a:t>Executive Summary</a:t></a:r></a:p></p:txBody>
+</p:sp><p:sp>
+ <p:nvSpPr><p:cNvPr id="74" name="kpi-strip"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+ <p:spPr><a:xfrm><a:off x="411480" y="960120"/><a:ext cx="2706624" cy="64008"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:solidFill><a:srgbClr val="1E40AF"/></a:solidFill><a:ln><a:noFill/></a:ln></p:spPr>
+ <p:txBody><a:bodyPr wrap="square" anchor="t" lIns="73152" tIns="36576" rIns="73152" bIns="36576"/><a:lstStyle/><a:p/></p:txBody>
+</p:sp><p:sp>
+ <p:nvSpPr><p:cNvPr id="75" name="kpi-card"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+ <p:spPr><a:xfrm><a:off x="411480" y="960120"/><a:ext cx="2706624" cy="960120"/></a:xfrm><a:prstGeom prst="roundRect"><a:avLst/></a:prstGeom><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill><a:ln w="12700"><a:solidFill><a:srgbClr val="E2E8F0"/></a:solidFill></a:ln></p:spPr>
+ <p:txBody><a:bodyPr wrap="square" anchor="t" lIns="73152" tIns="36576" rIns="73152" bIns="36576"/><a:lstStyle/><a:p/></p:txBody>
+</p:sp><p:sp>
+ <p:nvSpPr><p:cNvPr id="76" name="kpi-txt"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+ <p:spPr><a:xfrm><a:off x="457200" y="1051560"/><a:ext cx="2615184" cy="832104"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/><a:ln><a:noFill/></a:ln></p:spPr>
+ <p:txBody><a:bodyPr wrap="square" anchor="t" lIns="73152" tIns="36576" rIns="73152" bIns="36576"/><a:lstStyle/><a:p><a:pPr algn="l"><a:spcAft><a:spcPts val="200"/></a:spcAft></a:pPr><a:r><a:rPr lang="en-GB" sz="1050" b="1"><a:solidFill><a:srgbClr val="64748B"/></a:solidFill><a:latin typeface="Segoe UI"/></a:rPr><a:t>Total Projects</a:t></a:r></a:p><a:p><a:pPr algn="l"><a:spcAft><a:spcPts val="100"/></a:spcAft></a:pPr><a:r><a:rPr lang="en-GB" sz="2000" b="1"><a:solidFill><a:srgbClr val="1E40AF"/></a:solidFill><a:latin typeface="Segoe UI"/></a:rPr><a:t>9</a:t></a:r></a:p><a:p><a:pPr algn="l"></a:pPr><a:r><a:rPr lang="en-GB" sz="950"><a:solidFill><a:srgbClr val="64748B"/></a:solidFill><a:latin typeface="Segoe UI"/></a:rPr><a:t>9 invoice-layer + 8 PM</a:t></a:r></a:p></p:txBody>
+</p:sp><p:sp>
+ <p:nvSpPr><p:cNvPr id="78" name="kpi-strip"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+ <p:spPr><a:xfrm><a:off x="3300984" y="960120"/><a:ext cx="2706624" cy="64008"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:solidFill><a:srgbClr val="1E40AF"/></a:solidFill><a:ln><a:noFill/></a:ln></p:spPr>
+ <p:txBody><a:bodyPr wrap="square" anchor="t" lIns="73152" tIns="36576" rIns="73152" bIns="36576"/><a:lstStyle/><a:p/></p:txBody>
+</p:sp><p:sp>
+ <p:nvSpPr><p:cNvPr id="79" name="kpi-card"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+ <p:spPr><a:xfrm><a:off x="3300984" y="960120"/><a:ext cx="2706624" cy="960120"/></a:xfrm><a:prstGeom prst="roundRect"><a:avLst/></a:prstGeom><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill><a:ln w="12700"><a:solidFill><a:srgbClr val="E2E8F0"/></a:solidFill></a:ln></p:spPr>
+ <p:txBody><a:bodyPr wrap="square" anchor="t" lIns="73152" tIns="36576" rIns="73152" bIns="36576"/><a:lstStyle/><a:p/></p:txBody>
+</p:sp><p:sp>
+ <p:nvSpPr><p:cNvPr id="80" name="kpi-txt"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+ <p:spPr><a:xfrm><a:off x="3346704" y="1051560"/><a:ext cx="2615184" cy="832104"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/><a:ln><a:noFill/></a:ln></p:spPr>
+ <p:txBody><a:bodyPr wrap="square" anchor="t" lIns="73152" tIns="36576" rIns="73152" bIns="36576"/><a:lstStyle/><a:p><a:pPr algn="l"><a:spcAft><a:spcPts val="200"/></a:spcAft></a:pPr><a:r><a:rPr lang="en-GB" sz="1050" b="1"><a:solidFill><a:srgbClr val="64748B"/></a:solidFill><a:latin typeface="Segoe UI"/></a:rPr><a:t>Total Clients</a:t></a:r></a:p><a:p><a:pPr algn="l"><a:spcAft><a:spcPts val="100"/></a:spcAft></a:pPr><a:r><a:rPr lang="en-GB" sz="2000" b="1"><a:solidFill><a:srgbClr val="1E40AF"/></a:solidFill><a:latin typeface="Segoe UI"/></a:rPr><a:t>4</a:t></a:r></a:p></p:txBody>
+</p:sp><p:sp>
+ <p:nvSpPr><p:cNvPr id="82" name="kpi-strip"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+ <p:spPr><a:xfrm><a:off x="6190488" y="960120"/><a:ext cx="2706624" cy="64008"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:solidFill><a:srgbClr val="1E40AF"/></a:solidFill><a:ln><a:noFill/></a:ln></p:spPr>
+ <p:txBody><a:bodyPr wrap="square" anchor="t" lIns="73152" tIns="36576" rIns="73152" bIns="36576"/><a:lstStyle/><a:p/></p:txBody>
+</p:sp><p:sp>
+ <p:nvSpPr><p:cNvPr id="83" name="kpi-card"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+ <p:spPr><a:xfrm><a:off x="6190488" y="960120"/><a:ext cx="2706624" cy="960120"/></a:xfrm><a:prstGeom prst="roundRect"><a:avLst/></a:prstGeom><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill><a:ln w="12700"><a:solidFill><a:srgbClr val="E2E8F0"/></a:solidFill></a:ln></p:spPr>
+ <p:txBody><a:bodyPr wrap="square" anchor="t" lIns="73152" tIns="36576" rIns="73152" bIns="36576"/><a:lstStyle/><a:p/></p:txBody>
+</p:sp><p:sp>
+ <p:nvSpPr><p:cNvPr id="84" name="kpi-txt"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+ <p:spPr><a:xfrm><a:off x="6236208" y="1051560"/><a:ext cx="2615184" cy="832104"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/><a:ln><a:noFill/></a:ln></p:spPr>
+ <p:txBody><a:bodyPr wrap="square" anchor="t" lIns="73152" tIns="36576" rIns="73152" bIns="36576"/><a:lstStyle/><a:p><a:pPr algn="l"><a:spcAft><a:spcPts val="200"/></a:spcAft></a:pPr><a:r><a:rPr lang="en-GB" sz="1050" b="1"><a:solidFill><a:srgbClr val="64748B"/></a:solidFill><a:latin typeface="Segoe UI"/></a:rPr><a:t>Total Invoices</a:t></a:r></a:p><a:p><a:pPr algn="l"><a:spcAft><a:spcPts val="100"/></a:spcAft></a:pPr><a:r><a:rPr lang="en-GB" sz="2000" b="1"><a:solidFill><a:srgbClr val="1E40AF"/></a:solidFill><a:latin typeface="Segoe UI"/></a:rPr><a:t>125</a:t></a:r></a:p><a:p><a:pPr algn="l"></a:pPr><a:r><a:rPr lang="en-GB" sz="950"><a:solidFill><a:srgbClr val="64748B"/></a:solidFill><a:latin typeface="Segoe UI"/></a:rPr><a:t>125 unique IDs</a:t></a:r></a:p></p:txBody>
+</p:sp><p:sp>
+ <p:nvSpPr><p:cNvPr id="86" name="kpi-strip"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+ <p:spPr><a:xfrm><a:off x="9079992" y="960120"/><a:ext cx="2706624" cy="64008"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:solidFill><a:srgbClr val="1E40AF"/></a:solidFill><a:ln><a:noFill/></a:ln></p:spPr>
+ <p:txBody><a:bodyPr wrap="square" anchor="t" lIns="73152" tIns="36576" rIns="73152" bIns="36576"/><a:lstStyle/><a:p/></p:txBody>
+</p:sp><p:sp>
+ <p:nvSpPr><p:cNvPr id="87" name="kpi-card"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+ <p:spPr><a:xfrm><a:off x="9079992" y="960120"/><a:ext cx="2706624" cy="960120"/></a:xfrm><a:prstGeom prst="roundRect"><a:avLst/></a:prstGeom><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill><a:ln w="12700"><a:solidFill><a:srgbClr val="E2E8F0"/></a:solidFill></a:ln></p:spPr>
+ <p:txBody><a:bodyPr wrap="square" anchor="t" lIns="73152" tIns="36576" rIns="73152" bIns="36576"/><a:lstStyle/><a:p/></p:txBody>
+</p:sp><p:sp>
+ <p:nvSpPr><p:cNvPr id="88" name="kpi-txt"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+ <p:spPr><a:xfrm><a:off x="9125712" y="1051560"/><a:ext cx="2615184" cy="832104"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/><a:ln><a:noFill/></a:ln></p:spPr>
+ <p:txBody><a:bodyPr wrap="square" anchor="t" lIns="73152" tIns="36576" rIns="73152" bIns="36576"/><a:lstStyle/><a:p><a:pPr algn="l"><a:spcAft><a:spcPts val="200"/></a:spcAft></a:pPr><a:r><a:rPr lang="en-GB" sz="1050" b="1"><a:solidFill><a:srgbClr val="64748B"/></a:solidFill><a:latin typeface="Segoe UI"/></a:rPr><a:t>Total Invoiced</a:t></a:r></a:p><a:p><a:pPr algn="l"><a:spcAft><a:spcPts val="100"/></a:spcAft></a:pPr><a:r><a:rPr lang="en-GB" sz="2000" b="1"><a:solidFill><a:srgbClr val="1E40AF"/></a:solidFill><a:latin typeface="Segoe UI"/></a:rPr><a:t>£39,049</a:t></a:r></a:p><a:p><a:pPr algn="l"></a:pPr><a:r><a:rPr lang="en-GB" sz="950"><a:solidFill><a:srgbClr val="64748B"/></a:solidFill><a:latin typeface="Segoe UI"/></a:rPr><a:t>incl. VAT</a:t></a:r></a:p></p:txBody>
+</p:sp><p:sp>
+ <p:nvSpPr><p:cNvPr id="90" name="kpi-strip"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+ <p:spPr><a:xfrm><a:off x="411480" y="2039112"/><a:ext cx="2706624" cy="64008"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:solidFill><a:srgbClr val="15803D"/></a:solidFill><a:ln><a:noFill/></a:ln></p:spPr>
+ <p:txBody><a:bodyPr wrap="square" anchor="t" lIns="73152" tIns="36576" rIns="73152" bIns="36576"/><a:lstStyle/><a:p/></p:txBody>
+</p:sp><p:sp>
+ <p:nvSpPr><p:cNvPr id="91" name="kpi-card"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+ <p:spPr><a:xfrm><a:off x="411480" y="2039112"/><a:ext cx="2706624" cy="960120"/></a:xfrm><a:prstGeom prst="roundRect"><a:avLst/></a:prstGeom><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill><a:ln w="12700"><a:solidFill><a:srgbClr val="E2E8F0"/></a:solidFill></a:ln></p:spPr>
+ <p:txBody><a:bodyPr wrap="square" anchor="t" lIns="73152" tIns="36576" rIns="73152" bIns="36576"/><a:lstStyle/><a:p/></p:txBody>
+</p:sp><p:sp>
+ <p:nvSpPr><p:cNvPr id="92" name="kpi-txt"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+ <p:spPr><a:xfrm><a:off x="457200" y="2130552"/><a:ext cx="2615184" cy="832104"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/><a:ln><a:noFill/></a:ln></p:spPr>
+ <p:txBody><a:bodyPr wrap="square" anchor="t" lIns="73152" tIns="36576" rIns="73152" bIns="36576"/><a:lstStyle/><a:p><a:pPr algn="l"><a:spcAft><a:spcPts val="200"/></a:spcAft></a:pPr><a:r><a:rPr lang="en-GB" sz="1050" b="1"><a:solidFill><a:srgbClr val="64748B"/></a:solidFill><a:latin typeface="Segoe UI"/></a:rPr><a:t>Total Collected</a:t></a:r></a:p><a:p><a:pPr algn="l"><a:spcAft><a:spcPts val="100"/></a:spcAft></a:pPr><a:r><a:rPr lang="en-GB" sz="2000" b="1"><a:solidFill><a:srgbClr val="15803D"/></a:solidFill><a:latin typeface="Segoe UI"/></a:rPr><a:t>£32,834</a:t></a:r></a:p></p:txBody>
+</p:sp><p:sp>
+ <p:nvSpPr><p:cNvPr id="94" name="kpi-strip"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+ <p:spPr><a:xfrm><a:off x="3300984" y="2039112"/><a:ext cx="2706624" cy="64008"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:solidFill><a:srgbClr val=" of invoiced"/></a:solidFill><a:ln><a:noFill/></a:ln></p:spPr>
+ <p:txBody><a:bodyPr wrap="square" anchor="t" lIns="73152" tIns="36576" rIns="73152" bIns="36576"/><a:lstStyle/><a:p/></p:txBody>
+</p:sp><p:sp>
+ <p:nvSpPr><p:cNvPr id="95" name="kpi-card"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+ <p:spPr><a:xfrm><a:off x="3300984" y="2039112"/><a:ext cx="2706624" cy="960120"/></a:xfrm><a:prstGeom prst="roundRect"><a:avLst/></a:prstGeom><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill><a:ln w="12700"><a:solidFill><a:srgbClr val="E2E8F0"/></a:solidFill></a:ln></p:spPr>
+ <p:txBody><a:bodyPr wrap="square" anchor="t" lIns="73152" tIns="36576" rIns="73152" bIns="36576"/><a:lstStyle/><a:p/></p:txBody>
+</p:sp><p:sp>
+ <p:nvSpPr><p:cNvPr id="96" name="kpi-txt"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+ <p:spPr><a:xfrm><a:off x="3346704" y="2130552"/><a:ext cx="2615184" cy="832104"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/><a:ln><a:noFill/></a:ln></p:spPr>
+ <p:txBody><a:bodyPr wrap="square" anchor="t" lIns="73152" tIns="36576" rIns="73152" bIns="36576"/><a:lstStyle/><a:p><a:pPr algn="l"><a:spcAft><a:spcPts val="200"/></a:spcAft></a:pPr><a:r><a:rPr lang="en-GB" sz="1050" b="1"><a:solidFill><a:srgbClr val="64748B"/></a:solidFill><a:latin typeface="Segoe UI"/></a:rPr><a:t>Outstanding</a:t></a:r></a:p><a:p><a:pPr algn="l"><a:spcAft><a:spcPts val="100"/></a:spcAft></a:pPr><a:r><a:rPr lang="en-GB" sz="2000" b="1"><a:solidFill><a:srgbClr val=" of invoiced"/></a:solidFill><a:latin typeface="Segoe UI"/></a:rPr><a:t>£6,215</a:t></a:r></a:p><a:p><a:pPr algn="l"></a:pPr><a:r><a:rPr lang="en-GB" sz="950"><a:solidFill><a:srgbClr val="64748B"/></a:solidFill><a:latin typeface="Segoe UI"/></a:rPr><a:t>15.9%</a:t></a:r></a:p></p:txBody>
+</p:sp><p:sp>
+ <p:nvSpPr><p:cNvPr id="98" name="kpi-strip"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+ <p:spPr><a:xfrm><a:off x="6190488" y="2039112"/><a:ext cx="2706624" cy="64008"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:solidFill><a:srgbClr val="15803D"/></a:solidFill><a:ln><a:noFill/></a:ln></p:spPr>
+ <p:txBody><a:bodyPr wrap="square" anchor="t" lIns="73152" tIns="36576" rIns="73152" bIns="36576"/><a:lstStyle/><a:p/></p:txBody>
+</p:sp><p:sp>
+ <p:nvSpPr><p:cNvPr id="99" name="kpi-card"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+ <p:spPr><a:xfrm><a:off x="6190488" y="2039112"/><a:ext cx="2706624" cy="960120"/></a:xfrm><a:prstGeom prst="roundRect"><a:avLst/></a:prstGeom><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill><a:ln w="12700"><a:solidFill><a:srgbClr val="E2E8F0"/></a:solidFill></a:ln></p:spPr>
+ <p:txBody><a:bodyPr wrap="square" anchor="t" lIns="73152" tIns="36576" rIns="73152" bIns="36576"/><a:lstStyle/><a:p/></p:txBody>
+</p:sp><p:sp>
+ <p:nvSpPr><p:cNvPr id="100" name="kpi-txt"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+ <p:spPr><a:xfrm><a:off x="6236208" y="2130552"/><a:ext cx="2615184" cy="832104"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/><a:ln><a:noFill/></a:ln></p:spPr>
+ <p:txBody><a:bodyPr wrap="square" anchor="t" lIns="73152" tIns="36576" rIns="73152" bIns="36576"/><a:lstStyle/><a:p><a:pPr algn="l"><a:spcAft><a:spcPts val="200"/></a:spcAft></a:pPr><a:r><a:rPr lang="en-GB" sz="1050" b="1"><a:solidFill><a:srgbClr val="64748B"/></a:solidFill><a:latin typeface="Segoe UI"/></a:rPr><a:t>Collection Rate</a:t></a:r></a:p><a:p><a:pPr algn="l"><a:spcAft><a:spcPts val="100"/></a:spcAft></a:pPr><a:r><a:rPr lang="en-GB" sz="2000" b="1"><a:solidFill><a:srgbClr val="15803D"/></a:solidFill><a:latin typeface="Segoe UI"/></a:rPr><a:t>84.1%</a:t></a:r></a:p></p:txBody>
+</p:sp><p:sp>
+ <p:nvSpPr><p:cNvPr id="102" name="kpi-strip"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+ <p:spPr><a:xfrm><a:off x="9079992" y="2039112"/><a:ext cx="2706624" cy="64008"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:solidFill><a:srgbClr val="45.9%"/></a:solidFill><a:ln><a:noFill/></a:ln></p:spPr>
+ <p:txBody><a:bodyPr wrap="square" anchor="t" lIns="73152" tIns="36576" rIns="73152" bIns="36576"/><a:lstStyle/><a:p/></p:txBody>
+</p:sp><p:sp>
+ <p:nvSpPr><p:cNvPr id="103" name="kpi-card"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+ <p:spPr><a:xfrm><a:off x="9079992" y="2039112"/><a:ext cx="2706624" cy="960120"/></a:xfrm><a:prstGeom prst="roundRect"><a:avLst/></a:prstGeom><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill><a:ln w="12700"><a:solidFill><a:srgbClr val="E2E8F0"/></a:solidFill></a:ln></p:spPr>
+ <p:txBody><a:bodyPr wrap="square" anchor="t" lIns="73152" tIns="36576" rIns="73152" bIns="36576"/><a:lstStyle/><a:p/></p:txBody>
+</p:sp><p:sp>
+ <p:nvSpPr><p:cNvPr id="104" name="kpi-txt"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+ <p:spPr><a:xfrm><a:off x="9125712" y="2130552"/><a:ext cx="2615184" cy="832104"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/><a:ln><a:noFill/></a:ln></p:spPr>
+ <p:txBody><a:bodyPr wrap="square" anchor="t" lIns="73152" tIns="36576" rIns="73152" bIns="36576"/><a:lstStyle/><a:p><a:pPr algn="l"><a:spcAft><a:spcPts val="200"/></a:spcAft></a:pPr><a:r><a:rPr lang="en-GB" sz="1050" b="1"><a:solidFill><a:srgbClr val="64748B"/></a:solidFill><a:latin typeface="Segoe UI"/></a:rPr><a:t>Dev Hours Delivered</a:t></a:r></a:p><a:p><a:pPr algn="l"><a:spcAft><a:spcPts val="100"/></a:spcAft></a:pPr><a:r><a:rPr lang="en-GB" sz="2000" b="1"><a:solidFill><a:srgbClr val="45.9%"/></a:solidFill><a:latin typeface="Segoe UI"/></a:rPr><a:t>536h 51m</a:t></a:r></a:p><a:p><a:pPr algn="l"></a:pPr><a:r><a:rPr lang="en-GB" sz="950"><a:solidFill><a:srgbClr val="64748B"/></a:solidFill><a:latin typeface="Segoe UI"/></a:rPr><a:t>+</a:t></a:r></a:p></p:txBody>
+</p:sp><p:sp>
+ <p:nvSpPr><p:cNvPr id="106" name="sh"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+ <p:spPr><a:xfrm><a:off x="411480" y="3246120"/><a:ext cx="7315200" cy="292608"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/><a:ln><a:noFill/></a:ln></p:spPr>
+ <p:txBody><a:bodyPr wrap="square" anchor="t" lIns="73152" tIns="36576" rIns="73152" bIns="36576"/><a:lstStyle/><a:p><a:pPr algn="l"></a:pPr><a:r><a:rPr lang="en-GB" sz="1300" b="1"><a:solidFill><a:srgbClr val="0F172A"/></a:solidFill><a:latin typeface="Segoe UI"/></a:rPr><a:t>Key Insights</a:t></a:r></a:p></p:txBody>
+</p:sp><p:sp>
+ <p:nvSpPr><p:cNvPr id="110" name="ins"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+ <p:spPr><a:xfrm><a:off x="411480" y="3566160"/><a:ext cx="11375136" cy="2834640"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/><a:ln><a:noFill/></a:ln></p:spPr>
+ <p:txBody><a:bodyPr wrap="square" anchor="t" lIns="73152" tIns="36576" rIns="73152" bIns="36576"/><a:lstStyle/><a:p><a:pPr algn="l" marL="228600" indent="-228600"><a:spcAft><a:spcPts val="500"/></a:spcAft><a:buFont typeface="Arial"/><a:buChar char="•"/></a:pPr><a:r><a:rPr lang="en-GB" sz="1100"><a:solidFill><a:srgbClr val="1E293B"/></a:solidFill><a:latin typeface="Segoe UI"/></a:rPr><a:t>Collection position: Â£32,834.40 of Â£39,049.20 invoiced value collected (84.1%); Â£6,214.80 (15.9%) remains outstanding.</a:t></a:r></a:p><a:p><a:pPr algn="l" marL="228600" indent="-228600"><a:spcAft><a:spcPts val="500"/></a:spcAft><a:buFont typeface="Arial"/><a:buChar char="•"/></a:pPr><a:r><a:rPr lang="en-GB" sz="1100"><a:solidFill><a:srgbClr val="1E293B"/></a:solidFill><a:latin typeface="Segoe UI"/></a:rPr><a:t>SEO is the largest service line: Â£33,678.00 invoiced (86.2% of total) vs Development Â£5,371.20.</a:t></a:r></a:p><a:p><a:pPr algn="l" marL="228600" indent="-228600"><a:spcAft><a:spcPts val="500"/></a:spcAft><a:buFont typeface="Arial"/><a:buChar char="•"/></a:pPr><a:r><a:rPr lang="en-GB" sz="1100"><a:solidFill><a:srgbClr val="1E293B"/></a:solidFill><a:latin typeface="Segoe UI"/></a:rPr><a:t>Patrick Shoes Limited is the top client (Â£17,312.40, 44.3% of revenue) and also carries the highest unpaid exposure (Â£1,196.40).</a:t></a:r></a:p><a:p><a:pPr algn="l" marL="228600" indent="-228600"><a:spcAft><a:spcPts val="500"/></a:spcAft><a:buFont typeface="Arial"/><a:buChar char="•"/></a:pPr><a:r><a:rPr lang="en-GB" sz="1100"><a:solidFill><a:srgbClr val="1E293B"/></a:solidFill><a:latin typeface="Segoe UI"/></a:rPr><a:t>Development delivery is significantly over estimate: 536h 51m logged vs 367h 50m estimated (+45.9%).</a:t></a:r></a:p><a:p><a:pPr algn="l" marL="228600" indent="-228600"><a:spcAft><a:spcPts val="500"/></a:spcAft><a:buFont typeface="Arial"/><a:buChar char="•"/></a:pPr><a:r><a:rPr lang="en-GB" sz="1100"><a:solidFill><a:srgbClr val="1E293B"/></a:solidFill><a:latin typeface="Segoe UI"/></a:rPr><a:t>328h 55m of development effort (approx Â£3,289.17 at Â£10/hr) has no identified invoice â€” a billing gap.</a:t></a:r></a:p><a:p><a:pPr algn="l" marL="228600" indent="-228600"><a:spcAft><a:spcPts val="500"/></a:spcAft><a:buFont typeface="Arial"/><a:buChar char="•"/></a:pPr><a:r><a:rPr lang="en-GB" sz="1100"><a:solidFill><a:srgbClr val="1E293B"/></a:solidFill><a:latin typeface="Segoe UI"/></a:rPr><a:t>20 invoices totalling Â£5,496.00 are past due; the oldest unpaid invoice is 194 days past its due date (SUPERHOUSE (UK) LIMITED).</a:t></a:r></a:p><a:p><a:pPr algn="l" marL="228600" indent="-228600"><a:spcAft><a:spcPts val="500"/></a:spcAft><a:buFont typeface="Arial"/><a:buChar char="•"/></a:pPr><a:r><a:rPr lang="en-GB" sz="1100"><a:solidFill><a:srgbClr val="1E293B"/></a:solidFill><a:latin typeface="Segoe UI"/></a:rPr><a:t>2023-2025 cohorts are 100% collected; the entire outstanding balance sits in the 2026 invoice cohort (Â£6,214.80).</a:t></a:r></a:p></p:txBody>
+</p:sp><p:sp>
+ <p:nvSpPr><p:cNvPr id="114" name="fline"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+ <p:spPr><a:xfrm><a:off x="411480" y="6510528"/><a:ext cx="11375136" cy="10973"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:solidFill><a:srgbClr val="E2E8F0"/></a:solidFill><a:ln><a:noFill/></a:ln></p:spPr>
+ <p:txBody><a:bodyPr wrap="square" anchor="t" lIns="73152" tIns="36576" rIns="73152" bIns="36576"/><a:lstStyle/><a:p/></p:txBody>
+</p:sp><p:sp>
+ <p:nvSpPr><p:cNvPr id="115" name="ftext"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+ <p:spPr><a:xfrm><a:off x="411480" y="6547104"/><a:ext cx="9601200" cy="274320"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/><a:ln><a:noFill/></a:ln></p:spPr>
+ <p:txBody><a:bodyPr wrap="square" anchor="t" lIns="73152" tIns="36576" rIns="73152" bIns="36576"/><a:lstStyle/><a:p><a:pPr algn="l"></a:pPr><a:r><a:rPr lang="en-GB" sz="850"><a:solidFill><a:srgbClr val="64748B"/></a:solidFill><a:latin typeface="Segoe UI"/></a:rPr><a:t>Confidential — Management Use Only  |  Invoice, Project &amp; Development Effort Analysis  |  Data as of 2026-08-19</a:t></a:r></a:p></p:txBody>
+</p:sp><p:sp>
+ <p:nvSpPr><p:cNvPr id="116" name="pnum"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+ <p:spPr><a:xfrm><a:off x="10881360" y="6547104"/><a:ext cx="914400" cy="274320"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/><a:ln><a:noFill/></a:ln></p:spPr>
+ <p:txBody><a:bodyPr wrap="square" anchor="t" lIns="73152" tIns="36576" rIns="73152" bIns="36576"/><a:lstStyle/><a:p><a:pPr algn="r"></a:pPr><a:r><a:rPr lang="en-GB" sz="850"><a:solidFill><a:srgbClr val="64748B"/></a:solidFill><a:latin typeface="Segoe UI"/></a:rPr><a:t>2 / 18</a:t></a:r></a:p></p:txBody>
+</p:sp>
+ </p:spTree></p:cSld>
+ <p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr>
+</p:sld>

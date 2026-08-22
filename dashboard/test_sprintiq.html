@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SprintIQ Automated Test Suite</title>
+  <link href="https://fonts.googleapis.com/css2?family=Afacad:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Afacad', system-ui, sans-serif; background: #0e1117; color: #f8fafc; padding: 24px; }
+    h1 { color: #e63946; font-size: 22px; margin-bottom: 8px; }
+    .test-card { background: #161922; border: 1px solid #2a2e3d; border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+    .test-pass { border-left: 4px solid #2ec4b6; }
+    .test-fail { border-left: 4px solid #e63946; background: rgba(230, 57, 70, 0.1); }
+    .badge-pass { background: #2ec4b6; color: #0e1117; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 11px; }
+    .badge-fail { background: #e63946; color: #ffffff; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 11px; }
+    #summary { font-size: 16px; font-weight: 700; margin-bottom: 20px; padding: 12px; border-radius: 6px; }
+  </style>
+
+  <!-- Vendor Libraries -->
+  <script src="vendor/xlsx.full.min.js"></script>
+  <script src="vendor/chart.umd.min.js"></script>
+  <script src="vendor/jspdf.umd.min.js"></script>
+  <script src="vendor/pptxgen.bundle.js"></script>
+
+  <!-- App Core Modules -->
+  <script src="js/config.js"></script>
+  <script src="js/sample_data.js"></script>
+  <script src="js/parser.js"></script>
+  <script src="js/analytics.js"></script>
+  <script src="js/exports.js"></script>
+</head>
+<body>
+
+  <h1>SprintIQ Core Verification &amp; Logic Test Suite</h1>
+  <div id="summary">Running tests...</div>
+  <div id="test-results"></div>
+
+  <script>
+    const results = [];
+
+    function assert(name, condition, details = '') {
+      results.push({ name, pass: !!condition, details });
+    }
+
+    function runAllTests() {
+      // --- TEST SUITE 1: Hour Normalizer ---
+      assert('Normalize "16h" -> 16', SprintParser.normalizeHours('16h') === 16);
+      assert('Normalize "2 hr 30 min" -> 2.5', SprintParser.normalizeHours('2 hr 30 min') === 2.5);
+      assert('Normalize "1 hr" -> 1.0', SprintParser.normalizeHours('1 hr') === 1.0);
+      assert('Normalize "90 min" -> 1.5', SprintParser.normalizeHours('90 min') === 1.5);
+      assert('Normalize "2.5h" -> 2.5', SprintParser.normalizeHours('2.5h') === 2.5);
+      assert('Normalize "3h 45m" -> 3.75', SprintParser.normalizeHours('3h 45m') === 3.75);
+      assert('Normalize "45m" -> 0.75', SprintParser.normalizeHours('45m') === 0.75);
+      assert('Normalize "02:30" -> 2.5', SprintParser.normalizeHours('02:30') === 2.5);
+      assert('Normalize raw number 15 -> 15', SprintParser.normalizeHours(15) === 15);
+      assert('Normalize null/empty -> 0', SprintParser.normalizeHours(null) === 0 && SprintParser.normalizeHours('') === 0);
+
+      // --- TEST SUITE 2: Priority & Status Normalizers ---
+      assert('Normalize priority "Critical" -> High', SprintParser.normalizePriority('Critical') === 'High');
+      assert('Normalize priority "P1" -> High', SprintParser.normalizePriority('P1') === 'High');
+      assert('Normalize priority "Minor" -> Low', SprintParser.normalizePriority('Minor') === 'Low');
+      assert('Normalize status "Done" -> Completed', SprintParser.normalizeStatus('Done') === 'Completed');
+      assert('Normalize status "WIP" -> In Progress', SprintParser.normalizeStatus('WIP') === 'In Progress');
+      assert('Normalize status "Impediment" -> Blocked', SprintParser.normalizeStatus('Impediment') === 'Blocked');
+
+      // --- TEST SUITE 3: Sample Sprint 14 Analytics ---
+      const sampleSprints = window.SprintIQSampleData.getSampleSprints();
+      const sprint14 = sampleSprints[0];
+      const analysis = SprintAnalytics.analyzeSprint(sprint14, SprintIQConfig.get());
+
+      assert('Sprint 14 total tasks is 24', analysis.metrics.totalTasks === 24);
+      assert('Sprint 14 has 9 active team members', analysis.metrics.teamSize === 9);
+      assert('Sprint 14 completed tasks > 0', analysis.metrics.completed === 20);
+      assert('Sprint 14 completion rate calculated correctly', analysis.metrics.completionPct > 75);
+      assert('Sprint 14 total actual effort > 300h', analysis.metrics.totalAct > 300);
+      assert('Sprint 14 efficiency is calculated', analysis.metrics.efficiencyPct > 0);
+
+      // --- TEST SUITE 4: Multi-Dimensional Employee RAG ---
+      assert('All 9 employees analyzed', analysis.employees.length === 9);
+      const avinash = analysis.employees.find(e => e.name === 'Avinash');
+      assert('Avinash metrics populated', avinash && avinash.actHours > 0);
+      assert('Avinash has blocked task flagged in risk score', avinash.blocked === 1);
+      
+      const vani = analysis.employees.find(e => e.name === 'Vani');
+      assert('Vani 100% completion recognized as Green', vani && vani.rag === 'GREEN');
+
+      // --- TEST SUITE 5: Workload Classifications ---
+      assert('Workload average hours calculated', analysis.workload.avgHours > 0);
+      assert('Peak workload employee identified', analysis.workload.maxEmployee !== null);
+      assert('Imbalance score computed (0 - 100)', analysis.workload.imbalanceScore >= 0 && analysis.workload.imbalanceScore <= 100);
+
+      // --- TEST SUITE 6: Project Breakdown & Extraction ---
+      assert('Projects extracted from task names', analysis.projects.length >= 8);
+      const veeNet = analysis.projects.find(p => p.name === 'Vee Networks');
+      assert('Vee Networks project recognized', !!veeNet);
+      const sparta = analysis.projects.find(p => p.name.includes('SPARTA'));
+      assert('SPARTA CRM / Website recognized', !!sparta);
+
+      // --- TEST SUITE 7: Risk Register ---
+      assert('Risks identified in sprint', analysis.risks.length > 0);
+      const criticalRisk = analysis.risks.find(r => r.severity === 'Critical');
+      assert('Blocked task surfaced as Critical risk', !!criticalRisk);
+
+      // --- TEST SUITE 8: Retrospective Generation ---
+      assert('Executive summary text generated', analysis.retrospective.summary.length > 50);
+      assert('What went well items present', analysis.retrospective.whatWentWell.length > 0);
+      assert('What did not go well items present', analysis.retrospective.whatDidNotGoWell.length > 0);
+      assert('Action items have owners & outcomes', analysis.retrospective.nextSprintActions.every(a => a.action && a.owner && a.outcome));
+
+      // --- Render Results ---
+      const total = results.length;
+      const passed = results.filter(r => r.pass).length;
+      const failed = total - passed;
+
+      const sumEl = document.getElementById('summary');
+      sumEl.style.background = failed === 0 ? 'rgba(46, 196, 182, 0.2)' : 'rgba(230, 57, 70, 0.2)';
+      sumEl.style.color = failed === 0 ? '#2ec4b6' : '#e63946';
+      sumEl.innerHTML = `Tests Completed: ${passed} / ${total} Passed (${failed} Failed)`;
+
+      const container = document.getElementById('test-results');
+      container.innerHTML = results.map(r => `
+        <div class="test-card ${r.pass ? 'test-pass' : 'test-fail'}">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <strong>${r.name}</strong>
+            <span class="${r.pass ? 'badge-pass' : 'badge-fail'}">${r.pass ? 'PASS' : 'FAIL'}</span>
+          </div>
+          ${r.details ? `<div style="font-size: 12px; margin-top: 4px; color: #94a3b8;">${r.details}</div>` : ''}
+        </div>
+      `).join('');
+    }
+
+    window.addEventListener('DOMContentLoaded', runAllTests);
+  </script>
+</body>
+</html>
