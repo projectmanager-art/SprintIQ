@@ -23,6 +23,8 @@
 
   <!-- App Core Modules -->
   <script src="js/config.js"></script>
+  <script src="js/team.js"></script>
+  <script src="js/gsheet_import.js"></script>
   <script src="js/sample_data.js"></script>
   <script src="js/parser.js"></script>
   <script src="js/analytics.js"></script>
@@ -61,6 +63,27 @@
       assert('Normalize status "Done" -> Completed', SprintParser.normalizeStatus('Done') === 'Completed');
       assert('Normalize status "WIP" -> In Progress', SprintParser.normalizeStatus('WIP') === 'In Progress');
       assert('Normalize status "Impediment" -> Blocked', SprintParser.normalizeStatus('Impediment') === 'Blocked');
+
+      // --- TEST SUITE 2b: Google Sheet URL Parsing ---
+      assert('Extracts spreadsheet ID from standard URL', (() => {
+        const u = 'https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit';
+        // We test the same regex pattern used in app.js
+        const id = u.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/)[1];
+        return id === '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms';
+      })());
+      assert('Extracts gid from URL fragment', (() => {
+        const u = 'https://docs.google.com/spreadsheets/d/1ABC/edit#gid=123456';
+        return (u.match(/[#&?]gid=([0-9]+)/) || [])[1] === '123456';
+      })());
+
+      // --- TEST SUITE 2c: CSV Text Import Path ---
+      const csvSample = 'Item,Owner,Priority,Est,Act,Status\nVee Networks | Build,Aman,High,10,10,Completed\nAllenhouse Fix,Deepak,Medium,12,14,Completed';
+      const csvParser = new SprintParser();
+      csvParser.parseCsvText(csvSample, 'Google Sheet');
+      const csvExtract = csvParser.extractTasks();
+      assert('CSV text parsed into tasks', csvExtract.tasks.length === 2);
+      assert('CSV task owner normalized', csvExtract.tasks[0].owner === 'Aman');
+      assert('CSV task status normalized', csvExtract.tasks[0].status === 'Completed');
 
       // --- TEST SUITE 3: Sample Sprint 14 Analytics ---
       const sampleSprints = window.SprintIQSampleData.getSampleSprints();
@@ -106,6 +129,136 @@
       assert('What did not go well items present', analysis.retrospective.whatDidNotGoWell.length > 0);
       assert('Action items have owners & outcomes', analysis.retrospective.nextSprintActions.every(a => a.action && a.owner && a.outcome));
 
+      // --- TEST SUITE 9: Designation / Sprint Role Directory ---
+      const team = window.SprintIQTeam;
+      assert('Directory holds all 10 employees', team.all().length === 10);
+      assert('Aman designation is Developer', team.designation('Aman') === 'Developer');
+      assert('Nikhil designation is DevOps', team.designation('Nikhil') === 'DevOps');
+      assert('Abhijeet designation is QA', team.designation('Abhijeet') === 'QA');
+      assert('Avinash designation is Designer', team.designation('Avinash') === 'Designer');
+      assert('Sandeep designation is Project Manager', team.designation('Sandeep') === 'Project Manager');
+      assert('Sandeep sprint role is Scrum Master', team.sprintRole('Sandeep') === 'Scrum Master');
+      assert('Sandeep resource type is Management / Non-Billable', team.resolve('Sandeep').resource_type === 'Management / Non-Billable');
+      assert('Sandeep is_delivery_resource = false', team.isDeliveryResource('Sandeep') === false);
+      assert('Sandeep is_scrum_master = true', team.isScrumMaster('Sandeep') === true);
+      assert('Delivery team has 9 resources', team.deliveryTeam().length === 9);
+      assert('Sprint leadership has 1 resource', team.leadership().length === 1);
+      assert('Scrum Master resolves to Sandeep', team.scrumMaster().employee_name === 'Sandeep');
+      assert('Normal team member is_delivery_resource = true', team.isDeliveryResource('Aman') === true && team.isScrumMaster('Aman') === false);
+      assert('Unknown owner defaults to delivery resource', team.isDeliveryResource('SomeContractor') === true);
+      assert('Role registry supports future roles',
+        ['Scrum Master', 'Project Manager', 'Tech Lead', 'Product Owner', 'Delivery Manager'].every(r => team.availableRoles().includes(r)));
+
+      // --- TEST SUITE 10: Non-Delivery Exclusion From Calculations ---
+      const roleSprint = {
+        id: 'sprint-role-test',
+        name: 'Role Exclusion Sprint',
+        startDate: '2026-08-08',
+        endDate: '2026-08-22',
+        status: 'Active',
+        tasks: [
+          { id: 1, item: 'Vee Networks | Feature Build', priority: 'High', owner: 'Aman', est: 10, act: 10, status: 'Completed' },
+          { id: 2, item: 'Vee Networks | QA Cycle', priority: 'Medium', owner: 'Abhijeet', est: 10, act: 10, status: 'Completed' },
+          { id: 3, item: 'Sprint Ceremonies & Stakeholder Reporting', priority: 'Medium', owner: 'Sandeep', est: 20, act: 25, status: 'Completed' }
+        ]
+      };
+      const roleAnalysis = SprintAnalytics.analyzeSprint(roleSprint, SprintIQConfig.get());
+
+      assert('Scrum Master tasks excluded from total tasks', roleAnalysis.metrics.totalTasks === 2);
+      assert('Scrum Master hours excluded from team capacity', roleAnalysis.metrics.totalAct === 20);
+      assert('Scrum Master hours excluded from planned hours', roleAnalysis.metrics.totalEst === 20);
+      assert('Scrum Master excluded from team size', roleAnalysis.metrics.teamSize === 2);
+      assert('Scrum Master excluded from employee RAG scoring', !roleAnalysis.employees.some(e => e.name === 'Sandeep'));
+      assert('Scrum Master excluded from workload totals', roleAnalysis.workload.totalHours === 20);
+      assert('Scrum Master excluded from utilization lists',
+        !['underloadedList', 'balancedList', 'overloadedList'].some(k => (roleAnalysis.workload[k] || []).some(e => e.name === 'Sandeep')));
+      assert('Scrum Master excluded from project effort rollup',
+        roleAnalysis.projects.reduce((s, p) => s + p.actHours, 0) === 20);
+      assert('Scrum Master excluded from priority effort rollup',
+        roleAnalysis.priorities.reduce((s, p) => s + p.actHours, 0) === 20);
+      assert('Delivery employees carry designation metadata',
+        roleAnalysis.employees.every(e => !!e.designation && e.isDeliveryResource === true));
+
+      // --- TEST SUITE 11: Sprint Leadership Layer Visibility ---
+      const lead = roleAnalysis.leadership;
+      assert('Sprint leadership layer present in analysis', !!lead && !!lead.scrumMaster);
+      assert('Scrum Master surfaced as Sandeep', lead.scrumMaster.name === 'Sandeep');
+      assert('Scrum Master designation surfaced as Project Manager', lead.scrumMaster.designation === 'Project Manager');
+      assert('Scrum Master hours reported separately', lead.scrumMaster.actHours === 25 && lead.scrumMaster.taskCount === 1);
+      assert('Excluded capacity summary reported', lead.excludedFromCapacity.actHours === 25 && lead.excludedFromCapacity.taskCount === 1);
+      assert('Delivery roster exposed for team directory', lead.deliveryRoster.length === 9);
+      assert('Retrospective ownership assigned to Scrum Master', roleAnalysis.retrospective.retrospectiveOwner === 'Sandeep');
+      assert('Retrospective exposes sprint leadership', !!roleAnalysis.retrospective.sprintLeadership.scrumMaster);
+      assert('Leadership still visible when no leadership tasks logged',
+        analysis.leadership.scrumMaster && analysis.leadership.scrumMaster.name === 'Sandeep' && analysis.leadership.excludedFromCapacity.actHours === 0);
+
+      // --- TEST SUITE 12: Role-Driven (Not Name-Driven) Logic ---
+      const customDir = new TeamDirectory([
+        { employee_name: 'Riya', designation: 'Engineering Manager', sprint_role: 'Delivery Manager' },
+        { employee_name: 'Kabir', designation: 'Developer', sprint_role: 'Tech Lead' }
+      ]);
+      assert('New leadership role excluded without code changes', customDir.isDeliveryResource('Riya') === false);
+      assert('Tech Lead remains a delivery resource', customDir.isDeliveryResource('Kabir') === true);
+      assert('Role badge derived from role definition', customDir.roleBadge('Riya') === 'DELIVERY MANAGER');
+
+      // --- TEST SUITE 13: Report Exports Carry Sprint Leadership ---
+      // Stub the file writer so report generation can be verified without a download
+      const built = { excelSheets: [] };
+      window.XLSX.writeFile = (wb) => { built.excelSheets = (wb && wb.SheetNames) ? wb.SheetNames.slice() : []; };
+
+      const exportMeta = { companyName: 'PMO', department: 'Delivery', preparedBy: 'Sandeep', reportTitle: 'Sprint Report' };
+      SprintExporter.exportExcel(roleAnalysis, exportMeta);
+
+      assert('Excel report includes a Team & Roles sheet', built.excelSheets.includes('Team & Roles'));
+      assert('Excel employee sheet renamed to Delivery Team Performance', built.excelSheets.includes('Delivery Team Performance'));
+      assert('Excel report keeps all classic data sheets', ['Executive Summary', 'Sprint KPIs', 'Task Details', 'Project & Client Breakdown'].every(s => built.excelSheets.includes(s)));
+      // --- TEST SUITE 14: Google Sheet Parser / Adapter ---
+      const gSheetRows = [
+        ['FAST RANKING'],
+        ['Sprint Planning – 06/07 – 11/07'],
+        [],
+        ['Team Capacity Planning'],
+        ['Member', 'Role', 'Working Days', 'Leave (days)', 'Hrs', 'Capacity (hrs)'],
+        ['Aman', 'Developer', '6', '0', '7', '42'],
+        ['Deepak', 'Developer', '3.5', '2', '7', '24.5'],
+        ['Nikhil', 'DevOps', '6', '0', '7', '42'],
+        ['Sandeep', 'Project Coordinator', '6', '0', '7', '42'],
+        ['Total Team Capacity', '', '', '', '', '388.5'],
+        [],
+        ['Ongoing Sprint'],
+        ['#', 'Item', 'Priority', 'Owner(s)', 'Est. (hrs)', 'Status'],
+        ['1', 'Catesby | About US Page Design', 'Medium', 'Avinash', '6h', 'Completed'],
+        ['2', 'RPG | Logo Design', 'Medium', 'Avinash', '2h', 'Completed'],
+        ['3', 'FR | Case Study - 4', 'Medium', 'Avinash', '24h', 'In Progress'],
+        ['4', 'Hot Lead', 'High', 'Aman, Deepak', '4 hr', 'Pending']
+      ];
+      const gs = new GoogleSheetParser();
+      gs.parseGrid(gSheetRows);
+
+      assert('Google Sheet parser extracts sprint title', gs.title === 'FAST RANKING');
+      assert('Google Sheet parser extracts start and end dates', !!gs.startDate && !!gs.endDate);
+      assert('Google Sheet parser finds team members', gs.team.length === 4);
+      assert('Google Sheet parser sums total capacity from members', Math.abs(gs.team.reduce((s, m) => s + m.capacityHours, 0) - 150.5) < 0.1);
+      assert('Google Sheet parser excludes total rows from team', !gs.team.some(m => m.name.toLowerCase().includes('total')));
+      assert('Google Sheet parser finds ongoing sprint tasks', gs.tasks.length === 4);
+      assert('Google Sheet parser normalizes task hours', gs.tasks[0].est === 6 && gs.tasks[3].est === 4);
+      assert('Google Sheet parser normalizes status', gs.tasks[0].status === 'Completed' && gs.tasks[2].status === 'In Progress' && gs.tasks[3].status === 'Pending');
+      assert('Google Sheet parser handles multiple owners', gs.tasks[3].owners.length === 2 && gs.tasks[3].owners.includes('Aman') && gs.tasks[3].owners.includes('Deepak'));
+      assert('Google Sheet parser maps Sandeep to Scrum Master via team registry', (() => {
+        const sprint = GoogleSheetAdapter.toSprint(gs);
+        const sandeep = sprint.gsheetTeam.find(m => m.name === 'Sandeep');
+        return sandeep && sandeep.designation === 'Project Manager' && sandeep.sprintRole === 'Scrum Master' && sandeep.isScrumMaster === true && sandeep.isDeliveryResource === false;
+      })());
+      assert('Google Sheet adapter produces a sprint with tasks and capacity', (() => {
+        const sprint = GoogleSheetAdapter.toSprint(gs);
+        return sprint.tasks.length === 4 && sprint.capacity.totalCapacity === 150.5 && sprint.importSource === 'Google Sheets';
+      })());
+
+      assert('Leadership rows expose name & designation for reports', (() => {
+        const rows = roleAnalysis.leadership.members;
+        return rows.length === 1 && rows[0].name === 'Sandeep' && rows[0].designation === 'Project Manager';
+      })());
+
       // --- Render Results ---
       const total = results.length;
       const passed = results.filter(r => r.pass).length;
@@ -128,7 +281,17 @@
       `).join('');
     }
 
-    window.addEventListener('DOMContentLoaded', runAllTests);
+    window.addEventListener('DOMContentLoaded', () => {
+      try {
+        runAllTests();
+      } catch (err) {
+        const sumEl = document.getElementById('summary');
+        sumEl.style.background = 'rgba(230, 57, 70, 0.2)';
+        sumEl.style.color = '#e63946';
+        sumEl.textContent = `Test suite crashed after ${results.length} assertions: ${err.message}`;
+        console.error(err);
+      }
+    });
   </script>
 </body>
 </html>

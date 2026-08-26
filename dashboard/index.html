@@ -48,6 +48,9 @@
         <a class="nav-link" data-view="view-sprint-analysis">
           <i data-lucide="trending-up"></i> Sprint Analysis
         </a>
+        <a class="nav-link" data-view="view-team">
+          <i data-lucide="contact"></i> Team &amp; Roles
+        </a>
         <a class="nav-link" data-view="view-employee-rag">
           <i data-lucide="users"></i> Employee RAG
         </a>
@@ -192,6 +195,7 @@
               <p id="overview-executive-text" style="font-size: 13.5px; color: var(--text-secondary); line-height: 1.6; white-space: pre-line;">
                 Loading executive intelligence summary...
               </p>
+              <div id="overview-leadership-strip" class="leadership-strip" style="margin-top: 14px;"></div>
             </div>
           </div>
 
@@ -353,14 +357,89 @@
           </div>
         </div>
 
+        <!-- ================= VIEW 2B: TEAM / RESOURCES & ROLES ================= -->
+        <div id="view-team" class="view-panel" style="display: none;">
+
+          <div style="margin-bottom: 16px;">
+            <h2 style="font-size: 18px; font-weight: 800; color: var(--text-primary);">Team, Designations &amp; Sprint Roles</h2>
+            <p style="font-size: 12.5px; color: var(--text-secondary);">
+              Delivery resources drive all capacity, utilization and performance calculations. Sprint leadership is tracked separately as management / non-billable effort.
+            </p>
+          </div>
+
+          <div class="kpi-grid" style="margin-bottom: 20px;">
+            <div class="kpi-card">
+              <span class="kpi-label">Delivery Resources</span>
+              <div class="kpi-value" id="team-delivery-count">9</div>
+              <div class="kpi-subtext">Counted in capacity &amp; utilization</div>
+            </div>
+            <div class="kpi-card">
+              <span class="kpi-label">Sprint Leadership</span>
+              <div class="kpi-value" id="team-leadership-count">1</div>
+              <div class="kpi-subtext" id="team-leadership-subtext">Excluded from capacity</div>
+            </div>
+            <div class="kpi-card">
+              <span class="kpi-label">Scrum Master</span>
+              <div class="kpi-value" id="team-scrum-master-name" style="font-size: 22px;">—</div>
+              <div class="kpi-subtext" id="team-scrum-master-designation">Designation: —</div>
+            </div>
+            <div class="kpi-card">
+              <span class="kpi-label">Excluded Effort</span>
+              <div class="kpi-value" id="team-excluded-hours">0h</div>
+              <div class="kpi-subtext" id="team-excluded-tasks">0 leadership activities logged</div>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><i data-lucide="users"></i> Delivery Team</div>
+                <span style="font-size: 11.5px; color: var(--text-muted);">is_delivery_resource = true</span>
+              </div>
+              <div class="card-body" id="team-delivery-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
+            </div>
+
+            <div class="card" style="border-left: 3px solid var(--accent-red);">
+              <div class="card-header">
+                <div class="card-title"><i data-lucide="crown"></i> Sprint Leadership</div>
+                <span style="font-size: 11.5px; color: var(--text-muted);">is_delivery_resource = false</span>
+              </div>
+              <div class="card-body" id="team-leadership-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top: 20px;">
+            <div class="card-header">
+              <div class="card-title"><i data-lucide="table"></i> Role &amp; Designation Register</div>
+            </div>
+            <div class="card-body data-table-wrapper">
+              <table class="data-table" id="team-roster-table">
+                <thead>
+                  <tr>
+                    <th>Employee</th>
+                    <th>Designation</th>
+                    <th>Sprint Role</th>
+                    <th>Resource Type</th>
+                    <th>Delivery Resource</th>
+                    <th>Scrum Master</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
         <!-- ================= VIEW 3: EMPLOYEE RAG ================= -->
         <div id="view-employee-rag" class="view-panel" style="display: none;">
           
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
             <div>
-              <h2 style="font-size: 18px; font-weight: 800; color: var(--text-primary);">Employee Performance &amp; RAG Intelligence</h2>
+              <h2 style="font-size: 18px; font-weight: 800; color: var(--text-primary);">Delivery Team Performance &amp; RAG Intelligence</h2>
               <p style="font-size: 12.5px; color: var(--text-secondary);">
                 Transparent multi-dimensional evaluation (Delivery, Effort, Priority, Workload, Risk) calibrated without unfair raw-hour bias.
+                Scored for delivery resources only &mdash; sprint leadership appears under Team &amp; Roles.
               </p>
             </div>
             <div style="display: flex; gap: 8px;">
@@ -383,6 +462,7 @@
                 <thead>
                   <tr>
                     <th>Employee</th>
+                    <th>Designation</th>
                     <th>RAG</th>
                     <th>Score</th>
                     <th>Assigned</th>
@@ -407,6 +487,8 @@
         <!-- ================= VIEW 4: WORKLOAD & CAPACITY ================= -->
         <div id="view-workload" class="view-panel" style="display: none;">
           
+          <div id="workload-scope-note" class="leadership-strip" style="margin-bottom: 16px;"></div>
+
           <div class="kpi-grid" style="margin-bottom: 20px;">
             <div class="kpi-card">
               <span class="kpi-label">Team Total Logged</span>
@@ -584,15 +666,23 @@
             </div>
             <div class="card-body" style="display: flex; flex-direction: column; gap: 20px;">
               
-              <!-- Section 1: Executive Summary -->
+              <!-- Section 1: Sprint Leadership -->
+              <div class="retro-box" style="border-top: 3px solid var(--accent-red);">
+                <h3 style="font-size: 15px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                  <i data-lucide="crown" style="color: var(--accent-red);"></i> 1. Sprint Leadership
+                </h3>
+                <div id="retro-leadership-box" class="leadership-strip"></div>
+              </div>
+
+              <!-- Section 2: Executive Summary -->
               <div class="retro-box">
                 <h3 style="font-size: 15px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
-                  <i data-lucide="file-text" style="color: var(--accent-red);"></i> 1. Executive Summary
+                  <i data-lucide="file-text" style="color: var(--accent-red);"></i> 2. Delivery Team Performance &amp; Executive Summary
                 </h3>
                 <p id="retro-summary-text" style="font-size: 13.5px; color: var(--text-secondary); line-height: 1.6; white-space: pre-line;"></p>
               </div>
 
-              <!-- Section 2: What Went Well & What Didn't -->
+              <!-- Section 3: What Went Well & What Didn't -->
               <div class="grid-2">
                 <div class="retro-box" style="border-top: 3px solid var(--rag-green);">
                   <h3 style="font-size: 14.5px; font-weight: 700; color: var(--rag-green); display: flex; align-items: center; gap: 8px;">
@@ -738,14 +828,15 @@
                 <div style="padding: 10px; background: var(--bg-input); border-radius: 6px;">
                   <strong>Included Sections:</strong>
                   <ul style="margin-top: 6px; padding-left: 20px; line-height: 1.6;">
-                    <li>1. Executive Management Summary &amp; Health Gauge</li>
-                    <li>2. Sprint Key Performance Indicators (KPIs)</li>
-                    <li>3. Employee-Wise RAG &amp; Performance Scores</li>
-                    <li>4. Workload Imbalance &amp; Capacity Distribution</li>
-                    <li>5. Client &amp; Project Resource Consumption</li>
-                    <li>6. Sprint Risk Register &amp; High-Priority Blocker Triage</li>
-                    <li>7. Retrospective: What Went Well &amp; What Did Not</li>
-                    <li>8. Action Items &amp; Next Sprint Recommendations</li>
+                    <li>1. Sprint Leadership (Scrum Master &amp; Designation)</li>
+                    <li>2. Executive Management Summary &amp; Health Gauge</li>
+                    <li>3. Sprint Key Performance Indicators (KPIs)</li>
+                    <li>4. Delivery Team Performance &amp; RAG Scores</li>
+                    <li>5. Workload Imbalance &amp; Capacity Distribution</li>
+                    <li>6. Client &amp; Project Resource Consumption</li>
+                    <li>7. Sprint Risk Register &amp; High-Priority Blocker Triage</li>
+                    <li>8. Retrospective: What Went Well &amp; What Did Not</li>
+                    <li>9. Action Items &amp; Next Sprint Recommendations</li>
                   </ul>
                 </div>
               </div>
@@ -830,7 +921,7 @@
     <div class="modal-box" style="max-width: 750px;">
       <div class="modal-header">
         <div class="modal-title" style="display: flex; align-items: center; gap: 8px;">
-          <i data-lucide="upload-cloud" style="color: var(--accent-red);"></i> Import Sprint Excel / CSV
+          <i data-lucide="upload-cloud" style="color: var(--accent-red);"></i> Import Sprint Excel / CSV / Google Sheets
         </div>
         <button class="modal-close" id="modal-upload-close">&times;</button>
       </div>
@@ -839,11 +930,44 @@
         <!-- Dropzone -->
         <div class="dropzone" id="upload-dropzone">
           <i data-lucide="file-spreadsheet" class="dropzone-icon"></i>
-          <div>
+          <div id="dropzone-labels">
             <strong style="font-size: 15px; color: var(--text-primary);">Drag &amp; Drop Sprint File (.xlsx, .xls, .csv)</strong>
             <p style="font-size: 12.5px; color: var(--text-muted); margin-top: 4px;">or click to browse from your computer</p>
           </div>
+          <div id="selected-file-name" class="selected-file-name" style="display: none;"></div>
           <input type="file" id="upload-file-input" accept=".xlsx,.xls,.csv" style="display: none;">
+          <button type="button" class="btn btn-link btn-sm" id="btn-clear-file" style="display: none;">Clear</button>
+        </div>
+
+        <!-- OR separator -->
+        <div class="or-separator"><span>OR</span></div>
+
+        <!-- Google Sheet URL -->
+        <div class="g sheet-input-section" id="gsheet-input-section">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+            <i data-lucide="link" style="color: var(--accent-red);"></i>
+            <strong style="font-size: 13.5px; color: var(--text-primary);">Enter Google Sheet Link</strong>
+          </div>
+          <input type="text" id="gsheet-url-input" class="filter-input" placeholder="https://docs.google.com/spreadsheets/d/..." style="width: 100%;">
+          <p class="gsheet-hint">Make sure the Google Sheet is shared with &quot;Anyone with the link can view&quot;.</p>
+          <div id="gsheet-error" class="gsheet-message gsheet-error" style="display: none;"></div>
+        </div>
+
+        <!-- Sheet selection (for multi-tab spreadsheets) -->
+        <div id="gsheet-sheet-selection" class="gsheet-sheet-selection" style="display: none;">
+          <div style="font-size: 13.5px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">Select Sprint Sheet</div>
+          <div id="gsheet-sheet-options" class="gsheet-sheet-options"></div>
+        </div>
+
+        <!-- Loading state -->
+        <div id="upload-loading" class="upload-loading" style="display: none;">
+          <i data-lucide="loader-2" class="spin-icon"></i>
+          <span id="upload-loading-text">Fetching Google Sheet...</span>
+        </div>
+
+        <!-- Source indicator -->
+        <div id="upload-source-indicator" class="upload-source-indicator" style="display: none;">
+          <span id="upload-source-text">Using local file</span>
         </div>
 
         <!-- Detected Mapping & Configuration (Hidden until file selected) -->
@@ -880,7 +1004,13 @@
             </div>
           </div>
 
-          <!-- Validation Feedback Box -->
+          <!-- Import Preview -->
+        <div id="gsheet-preview" class="gsheet-preview" style="display: none;">
+          <div class="gsheet-preview-title"><i data-lucide="check-circle" style="color: var(--rag-green);"></i> Google Sheet Connected</div>
+          <div id="gsheet-preview-body" class="gsheet-preview-body"></div>
+        </div>
+
+        <!-- Validation Feedback Box -->
           <div id="upload-validation-box" style="padding: 12px 14px; background: var(--bg-input); border-radius: 8px; font-size: 12.5px; color: var(--text-secondary);">
             Checking data integrity...
           </div>
@@ -977,6 +1107,8 @@
 
   <!-- Application Logic Scripts -->
   <script src="js/config.js"></script>
+  <script src="js/team.js"></script>
+  <script src="js/gsheet_import.js"></script>
   <script src="js/sample_data.js"></script>
   <script src="js/parser.js"></script>
   <script src="js/analytics.js"></script>

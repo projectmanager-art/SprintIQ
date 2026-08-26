@@ -41,6 +41,7 @@ class ReportDataModel {
     this.priorities = this.analysis.priorities || [];
     this.risks = this.analysis.risks || [];
     this.retrospective = this.analysis.retrospective || {};
+    this.leadership = this.analysis.leadership || { members: [], deliveryRoster: [], scrumMaster: null, excludedFromCapacity: { headcount: 0, taskCount: 0, estHours: 0, actHours: 0 } };
   }
 
   static now() { return new Date().toLocaleDateString(); }
@@ -123,6 +124,19 @@ class ReportDataModel {
   }
 
   employeeRows() { return this.employees; }
+
+  /** Sprint leadership (non-delivery resources) - reported separately */
+  leadershipRows() { return this.leadership.members || []; }
+
+  /** Full people directory: delivery resources followed by sprint leadership */
+  rosterRows() {
+    return (this.leadership.deliveryRoster || []).concat(this.leadership.members || []);
+  }
+
+  get scrumMaster() { return this.leadership.scrumMaster || null; }
+  get scrumMasterName() { return this.scrumMaster ? this.scrumMaster.name : 'Not assigned'; }
+  get scrumMasterDesignation() { return this.scrumMaster ? this.scrumMaster.designation : 'N/A'; }
+
   projectRows() { return this.projects; }
   priorityRows() { return this.priorities; }
   riskRows() { return this.risks; }
@@ -258,6 +272,8 @@ class SprintExporter {
       [makeHeader('Generated'), X(meta.date)],
       [makeHeader('Company'), X(meta.company)],
       [makeHeader('Prepared By'), X(meta.preparedBy)],
+      [makeHeader('Scrum Master'), X(report.scrumMasterName)],
+      [makeHeader('Scrum Master Designation'), X(report.scrumMasterDesignation)],
       [makeHeader('Overall RAG'), RAG(report.rag)],
       [makeHeader('RAG Score'), X(report.ragScore)],
       [makeHeader('Executive Summary'), X(report.summary, { alignment: { wrapText: true } })],
@@ -285,15 +301,40 @@ class SprintExporter {
     finishSheet(wsKpi, 1);
     XLSX.utils.book_append_sheet(wb, wsKpi, 'Sprint KPIs');
 
-    // 3. Employee Performance
+    // 2B. Team & Roles (designations, sprint roles, capacity eligibility)
+    const rosterHeaders = ['Employee', 'Designation', 'Sprint Role', 'Resource Type', 'Delivery Resource', 'Scrum Master', 'Counted in Capacity'];
+    const rosterAoa = [
+      [X('Sprint Leadership', { font: { bold: true, color: { rgb: 'F8FAFC' } }, fill: { patternType: 'solid', fgColor: { rgb: '1E293B' } } })],
+      [makeHeader('Scrum Master'), X(report.scrumMasterName)],
+      [makeHeader('Designation'), X(report.scrumMasterDesignation)],
+      [makeHeader('Excluded Leadership Effort'), Hrs(report.leadership.excludedFromCapacity.actHours)],
+      [],
+      [X('Role & Designation Register', { font: { bold: true, color: { rgb: 'F8FAFC' } }, fill: { patternType: 'solid', fgColor: { rgb: '1E293B' } } })],
+      rosterHeaders.map(makeHeader),
+      ...report.rosterRows().map(p => [
+        X(p.name),
+        X(p.designation),
+        X(p.sprintRole),
+        X(p.resourceType),
+        X(p.isDeliveryResource ? 'Yes' : 'No'),
+        X(p.isScrumMaster ? 'Yes' : 'No'),
+        X(p.isDeliveryResource ? 'Yes' : 'No (management / non-billable)')
+      ])
+    ];
+    const wsRoster = XLSX.utils.aoa_to_sheet(rosterAoa);
+    finishSheet(wsRoster, 0);
+    XLSX.utils.book_append_sheet(wb, wsRoster, 'Team & Roles');
+
+    // 3. Delivery Team Performance
     const empHeaders = [
-      'Employee', 'RAG', 'Score', 'Assigned', 'Completed', 'In Progress', 'Blocked',
+      'Employee', 'Designation', 'RAG', 'Score', 'Assigned', 'Completed', 'In Progress', 'Blocked',
       'Completion %', 'Est Hours', 'Act Hours', 'Variance (h)', 'Variance %',
       'Efficiency %', 'Workload %', 'Workload Status', 'Observation', 'Recommendation'
     ];
     const empAoa = [empHeaders.map(makeHeader)];
     empAoa.push(...report.employeeRows().map(e => [
       X(e.name),
+      X(e.designation),
       RAG(e.rag),
       Num(e.score),
       Num(e.totalAssigned),
@@ -313,7 +354,7 @@ class SprintExporter {
     ]));
     const wsEmp = XLSX.utils.aoa_to_sheet(empAoa);
     finishSheet(wsEmp, 1);
-    XLSX.utils.book_append_sheet(wb, wsEmp, 'Employee Performance');
+    XLSX.utils.book_append_sheet(wb, wsEmp, 'Delivery Team Performance');
 
     // 4. Task Details
     const taskHeaders = ['#', 'Task / Activity', 'Priority', 'Owner', 'Est (h)', 'Act (h)', 'Variance (h)', 'Variance %', 'Status', 'Risk Flag'];
@@ -350,7 +391,8 @@ class SprintExporter {
     ]));
     const wsProj = XLSX.utils.aoa_to_sheet(projAoa);
     finishSheet(wsProj, 1);
-    XLSX.utils.book_append_sheet(wb, wsProj, 'Project/Client Breakdown');
+    // Sheet names cannot contain : \ / ? * [ ]
+    XLSX.utils.book_append_sheet(wb, wsProj, 'Project & Client Breakdown');
 
     // 6. Effort Analysis
     const w = report.workload;
@@ -383,6 +425,7 @@ class SprintExporter {
     // 7. Retrospective
     const retroAoa = [
       [X('Sprint Retrospective', { font: { bold: true, color: { rgb: 'F8FAFC' } }, fill: { patternType: 'solid', fgColor: { rgb: '1E293B' } } })],
+      [makeHeader('Scrum Master'), X(`${report.scrumMasterName} (${report.scrumMasterDesignation})`)],
       [makeHeader('Summary'), X(report.summary, { alignment: { wrapText: true } })],
       [],
       [makeHeader('What Went Well')],
@@ -609,8 +652,9 @@ class SprintExporter {
     doc.text(`Sprint: ${report.sprint.name || 'N/A'}`, m, 290);
     doc.text(`Duration: ${report.duration}`, m, 310);
     doc.setFontSize(12);
-    doc.text(`Company: ${meta.company}  |  Prepared By: ${meta.preparedBy}`, m, 340);
-    doc.text(`Generated: ${meta.date}`, m, 360);
+    doc.text(`Scrum Master: ${report.scrumMasterName} (${report.scrumMasterDesignation})`, m, 335);
+    doc.text(`Company: ${meta.company}  |  Prepared By: ${meta.preparedBy}`, m, 355);
+    doc.text(`Generated: ${meta.date}`, m, 375);
 
     const rc = report.ragColor(report.rag);
     const rgb = rc.fill.match(/[0-9A-Fa-f]{2}/g).map(h => parseInt(h, 16));
@@ -621,13 +665,45 @@ class SprintExporter {
     doc.setTextColor(255, 255, 255);
     doc.text(`OVERALL SPRINT HEALTH: ${report.rag}  (Score: ${report.ragScore}/100)`, m + 12, 417);
 
-    // --- Executive Summary ---
+    // --- Sprint Leadership (management layer, excluded from delivery metrics) ---
     doc.addPage();
-    pageHeader('Executive Summary');
+    pageHeader('Sprint Leadership');
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
     doc.setTextColor(248, 250, 252);
-    doc.text('1. Executive Management Summary', m, y);
+    doc.text('1. Sprint Leadership', m, y);
+    y += 18;
+    const leadLines = [
+      ['Scrum Master', report.scrumMasterName],
+      ['Designation', report.scrumMasterDesignation],
+      ['Resource Type', report.scrumMaster ? report.scrumMaster.resourceType : 'N/A'],
+      ['Excluded from Capacity', `${report.leadership.excludedFromCapacity.headcount} resource(s), ${report.leadership.excludedFromCapacity.actHours}h`]
+    ];
+    const otherLeads = report.leadershipRows().filter(l => !l.isScrumMaster);
+    if (otherLeads.length > 0) {
+      leadLines.push(['Other Leadership', otherLeads.map(l => `${l.name} (${l.designation})`).join(', ')]);
+    }
+    leadLines.forEach((row, i) => {
+      doc.setFillColor(...(i % 2 === 0 ? [26, 29, 38] : [18, 20, 26]));
+      doc.rect(m, y - 12, pageW - 2 * m, 18, 'F');
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(148, 163, 184);
+      doc.text(row[0], m + 6, y + 2);
+      doc.setFont('helvetica', 'normal'); doc.setTextColor(248, 250, 252);
+      doc.text(String(row[1]), m + 180, y + 2);
+      y += 20;
+    });
+    y += 4;
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(8.5);
+    doc.setTextColor(148, 163, 184);
+    doc.text('Sprint leadership is management / non-billable effort and is excluded from all delivery capacity, utilization and RAG calculations below.', m, y, { maxWidth: pageW - 2 * m });
+    y += 22;
+
+    // --- Executive Summary ---
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.setTextColor(248, 250, 252);
+    doc.text('2. Executive Management Summary', m, y);
     y += 18;
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
@@ -640,7 +716,7 @@ class SprintExporter {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
     doc.setTextColor(248, 250, 252);
-    doc.text('2. Sprint Health', m, y);
+    doc.text('3. Sprint Health', m, y);
     y += 18;
     const health = [
       ['Overall RAG', report.rag, 'RAG Score', `${report.ragScore}/100`],
@@ -670,7 +746,7 @@ class SprintExporter {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
     doc.setTextColor(248, 250, 252);
-    doc.text('3. Sprint KPIs', m, y);
+    doc.text('4. Sprint KPIs', m, y);
     y += 18;
     const kpi = report.kpiList();
     const kpiA = [];
@@ -690,9 +766,10 @@ class SprintExporter {
     });
     y += 10;
 
-    // --- Employee RAG table ---
+    // --- Delivery Team Performance table (delivery resources only) ---
     const empRows = report.employeeRows().map(e => [
       e.name,
+      e.designation || '',
       e.rag,
       e.score,
       e.totalAssigned,
@@ -705,19 +782,20 @@ class SprintExporter {
       e.workloadStatus
     ]);
     const empCols = [
-      { header: 'Employee', w: 95 },
-      { header: 'RAG', w: 38, rag: true },
-      { header: 'Score', w: 38 },
-      { header: 'Assign', w: 42 },
-      { header: 'Done', w: 42 },
-      { header: 'Comp %', w: 48 },
-      { header: 'Est', w: 38 },
-      { header: 'Act', w: 38 },
-      { header: 'Var', w: 45 },
-      { header: 'Eff %', w: 48 },
-      { header: 'WLoad', w: 65 }
+      { header: 'Employee', w: 78 },
+      { header: 'Designation', w: 62 },
+      { header: 'RAG', w: 34, rag: true },
+      { header: 'Score', w: 32 },
+      { header: 'Assign', w: 36 },
+      { header: 'Done', w: 34 },
+      { header: 'Comp %', w: 42 },
+      { header: 'Est', w: 34 },
+      { header: 'Act', w: 34 },
+      { header: 'Var', w: 40 },
+      { header: 'Eff %', w: 42 },
+      { header: 'WLoad', w: 55 }
     ];
-    drawTable(empCols, empRows, '4. Employee RAG Performance');
+    drawTable(empCols, empRows, '5. Delivery Team Performance (RAG)');
 
     // --- Project/Client table ---
     const projRows = report.projectRows().map(p => [
@@ -742,7 +820,7 @@ class SprintExporter {
       { header: 'RAG', w: 38, rag: true },
       { header: 'Owners', w: 130 }
     ];
-    drawTable(projCols, projRows, '5. Project / Client Breakdown');
+    drawTable(projCols, projRows, '6. Project / Client Breakdown');
 
     // --- Task table ---
     const taskRows = report.taskRows().map(t => [
@@ -765,14 +843,14 @@ class SprintExporter {
       { header: 'Var', w: 45 },
       { header: 'Status', w: 60 }
     ];
-    drawTable(taskCols, taskRows, '6. Task Breakdown');
+    drawTable(taskCols, taskRows, '7. Task Breakdown');
 
     // --- Effort Analysis ---
     if (y + 100 > maxY) { doc.addPage(); pageHeader('Effort Analysis'); }
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
     doc.setTextColor(248, 250, 252);
-    doc.text('7. Effort Analysis', m, y);
+    doc.text('8. Effort Analysis', m, y);
     y += 18;
     const w = report.workload;
     const effortLines = [
@@ -823,7 +901,7 @@ class SprintExporter {
       { header: 'RAG', w: 40, rag: true },
       { header: 'Action', w: 95 }
     ];
-    drawTable(riskCols, riskRows, '8. Risk Register');
+    drawTable(riskCols, riskRows, '9. Risk Register');
 
     // --- Action Items ---
     const actionRows = report.actionRows().map(a => [
@@ -838,14 +916,14 @@ class SprintExporter {
       { header: 'Priority', w: 80 },
       { header: 'Expected Outcome', w: 150 }
     ];
-    drawTable(actionCols, actionRows, '9. Next Sprint Action Items');
+    drawTable(actionCols, actionRows, '10. Next Sprint Action Items');
 
     // --- Final Summary ---
     if (y + 80 > maxY) { doc.addPage(); pageHeader('Final Summary'); }
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(14);
     doc.setTextColor(248, 250, 252);
-    doc.text('10. Final Summary', m, y);
+    doc.text('11. Final Summary', m, y);
     y += 20;
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
@@ -945,9 +1023,43 @@ class SprintExporter {
     s1.addText('Turn Sprint Data into Management Intelligence', { x: 1, y: 2.9, w: 11.3, h: 0.5, fontSize: 18, color: LIGHT });
     s1.addText(meta.title, { x: 1, y: 4.0, w: 11.3, h: 0.5, fontSize: 15, color: MUTED });
     s1.addText(`Sprint: ${report.sprint.name || 'N/A'}`, { x: 1, y: 4.7, w: 11.3, h: 0.4, fontSize: 13, color: MUTED });
-    s1.addText(`Company: ${meta.company}  |  Prepared By: ${meta.preparedBy}  |  Date: ${meta.date}`, { x: 1, y: 5.4, w: 11.3, h: 0.4, fontSize: 11, color: MUTED });
+    s1.addText(`Scrum Master: ${report.scrumMasterName} (${report.scrumMasterDesignation})`, { x: 1, y: 5.1, w: 11.3, h: 0.4, fontSize: 13, color: MUTED });
+    s1.addText(`Company: ${meta.company}  |  Prepared By: ${meta.preparedBy}  |  Date: ${meta.date}`, { x: 1, y: 5.7, w: 11.3, h: 0.4, fontSize: 11, color: MUTED });
 
-    // 2. Executive Summary
+    // 2. Sprint Leadership (management layer - excluded from delivery metrics)
+    const sLead = newSlide('Sprint Leadership');
+    sLead.addShape(pptx.shapes.ROUNDED_RECTANGLE, { x: 0.5, y: 1.2, w: 6.0, h: 2.0, fill: { color: CARD }, line: { color: RED, width: 1.5 } });
+    sLead.addText('SCRUM MASTER', { x: 0.75, y: 1.35, w: 5.5, h: 0.35, fontSize: 11, bold: true, color: RED });
+    sLead.addText(report.scrumMasterName, { x: 0.75, y: 1.7, w: 5.5, h: 0.6, fontSize: 26, bold: true, color: LIGHT });
+    sLead.addText(`Designation: ${report.scrumMasterDesignation}`, { x: 0.75, y: 2.35, w: 5.5, h: 0.4, fontSize: 13, color: MUTED });
+    sLead.addText(`Resource Type: ${report.scrumMaster ? report.scrumMaster.resourceType : 'N/A'}`, { x: 0.75, y: 2.7, w: 5.5, h: 0.4, fontSize: 12, color: MUTED });
+
+    sLead.addShape(pptx.shapes.ROUNDED_RECTANGLE, { x: 6.8, y: 1.2, w: 6.0, h: 2.0, fill: { color: CARD } });
+    sLead.addText('DELIVERY TEAM SCOPE', { x: 7.05, y: 1.35, w: 5.5, h: 0.35, fontSize: 11, bold: true, color: GREEN });
+    sLead.addText(`${report.employeeRows().length} delivery resources scored`, { x: 7.05, y: 1.7, w: 5.5, h: 0.5, fontSize: 18, bold: true, color: LIGHT });
+    sLead.addText(`Excluded from capacity: ${report.leadership.excludedFromCapacity.headcount} leadership resource(s), ${report.leadership.excludedFromCapacity.actHours}h`, {
+      x: 7.05, y: 2.25, w: 5.5, h: 0.8, fontSize: 12, color: MUTED
+    });
+
+    const rosterPpt = report.rosterRows().map(p => [
+      { text: p.name, options: { color: LIGHT } },
+      { text: p.designation, options: { color: LIGHT } },
+      { text: p.sprintRole, options: { color: p.isScrumMaster ? RED : LIGHT, bold: !!p.isScrumMaster } },
+      { text: p.resourceType, options: { color: MUTED } },
+      { text: p.isDeliveryResource ? 'Yes' : 'No', options: { color: p.isDeliveryResource ? GREEN : AMBER, bold: true } }
+    ]);
+    sLead.addText('Delivery resources drive all capacity, utilization, workload and RAG calculations. Sprint leadership is reported separately as management / non-billable effort.', {
+      x: 0.5, y: 3.5, w: 12.3, h: 0.6, fontSize: 12, italic: true, color: MUTED
+    });
+
+    tableSlide('Team & Roles Register',
+      ['Employee', 'Designation', 'Sprint Role', 'Resource Type', 'Delivery Resource'],
+      rosterPpt,
+      [2.4, 2.6, 2.4, 3.2, 1.7],
+      10
+    );
+
+    // 3. Executive Summary
     const s2 = newSlide('Executive Summary');
     const rc = report.ragColor(report.rag);
     s2.addShape(pptx.shapes.ROUNDED_RECTANGLE, {
@@ -993,9 +1105,10 @@ class SprintExporter {
       valign: 'middle'
     });
 
-    // 5. Employee RAG
+    // 5. Delivery Team Performance
     const empRows = report.employeeRows().map(e => [
       { text: e.name, options: { color: LIGHT } },
+      { text: e.designation || '', options: { color: MUTED } },
       { text: e.rag, options: { bold: true, color: ragPptx(e.rag) } },
       { text: e.score, options: { color: LIGHT } },
       { text: e.totalAssigned, options: { color: LIGHT } },
@@ -1005,10 +1118,10 @@ class SprintExporter {
       { text: `${e.efficiencyPct}%`, options: { color: LIGHT } },
       { text: e.workloadStatus, options: { color: LIGHT } }
     ]);
-    tableSlide('Employee RAG Performance',
-      ['Employee', 'RAG', 'Score', 'Assigned', 'Done', 'Comp %', 'Var', 'Eff %', 'WLoad'],
+    tableSlide('Delivery Team Performance (RAG)',
+      ['Employee', 'Designation', 'RAG', 'Score', 'Assigned', 'Done', 'Comp %', 'Var', 'Eff %', 'WLoad'],
       empRows,
-      [2.8, 0.8, 0.8, 0.9, 0.9, 1.0, 1.0, 1.0, 1.7],
+      [1.9, 1.7, 0.8, 0.8, 0.9, 0.8, 1.0, 1.0, 0.9, 1.5],
       7
     );
 

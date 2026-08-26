@@ -6,23 +6,59 @@
 
 class SprintAnalytics {
   /**
+   * Team / role registry accessor. Every delivery-resource decision goes
+   * through here so no role is ever hard-coded in the calculation logic.
+   */
+  static team() {
+    return window.SprintIQTeam;
+  }
+
+  /**
+   * Tasks owned by employees where is_delivery_resource = true.
+   * These are the ONLY tasks feeding capacity, utilization, workload and
+   * employee performance calculations.
+   */
+  static deliveryTasks(tasks) {
+    const team = this.team();
+    if (!team) return tasks || [];
+    return (tasks || []).filter(t => team.isDeliveryResource(t.owner));
+  }
+
+  /**
+   * Tasks owned by non-delivery resources (sprint leadership / management).
+   * Reported separately, never merged into delivery capacity.
+   */
+  static leadershipTasks(tasks) {
+    const team = this.team();
+    if (!team) return [];
+    return (tasks || []).filter(t => !team.isDeliveryResource(t.owner));
+  }
+
+  /**
    * Main entry point to analyze a sprint with given tasks and config
    */
   static analyzeSprint(sprint, config = window.SprintIQConfig.get()) {
-    const tasks = sprint.tasks || [];
+    const allTasks = sprint.tasks || [];
+    const tasks = this.deliveryTasks(allTasks);
+    const excludedTasks = this.leadershipTasks(allTasks);
+
     const sprintMetrics = this.calculateSprintMetrics(tasks, config);
     const employeeMetrics = this.calculateEmployeeMetrics(tasks, config, sprintMetrics);
     const workloadMetrics = this.calculateWorkload(tasks, config, employeeMetrics);
     const projectMetrics = this.extractProjects(tasks);
     const priorityMetrics = this.calculatePriorityMetrics(tasks);
     const riskRegister = this.identifyRisks(tasks, config, employeeMetrics, sprintMetrics);
+    const leadership = this.buildLeadership(excludedTasks);
     const executiveSummary = this.generateExecutiveSummary(sprint, sprintMetrics, employeeMetrics, riskRegister);
     const retrospective = this.generateRetrospective(sprint, sprintMetrics, employeeMetrics, riskRegister, projectMetrics);
 
     return {
       sprint,
+      deliveryTasks: tasks,
+      excludedTasks,
       metrics: sprintMetrics,
       employees: employeeMetrics,
+      leadership,
       workload: workloadMetrics,
       projects: projectMetrics,
       priorities: priorityMetrics,
@@ -33,9 +69,72 @@ class SprintAnalytics {
   }
 
   /**
-   * Overall Sprint KPIs & Global RAG Calculation
+   * Sprint Leadership Layer (non-delivery resources).
+   * Visible in sprint overview, retrospective and management reports, but
+   * fully excluded from every delivery capacity / performance metric.
    */
-  static calculateSprintMetrics(tasks, config) {
+  static buildLeadership(excludedTasks = []) {
+    const team = this.team();
+    const roster = team ? team.leadership() : [];
+
+    // Any non-delivery owner appearing in the sprint but missing from the roster
+    const extras = [];
+    excludedTasks.forEach(t => {
+      const name = t.owner || 'Unassigned';
+      if (!roster.some(r => r.employee_name === name) && !extras.some(r => r.employee_name === name)) {
+        extras.push(team ? team.resolve(name) : { employee_name: name });
+      }
+    });
+
+    const members = roster.concat(extras).map(r => {
+      const own = excludedTasks.filter(t => (t.owner || '') === r.employee_name);
+      const estHours = own.reduce((s, t) => s + (t.est || 0), 0);
+      const actHours = own.reduce((s, t) => s + (t.act || 0), 0);
+      return {
+        name: r.employee_name,
+        designation: r.designation,
+        sprintRole: r.sprint_role,
+        resourceType: r.resource_type,
+        roleBadge: r.role_badge,
+        isDeliveryResource: false,
+        isScrumMaster: !!r.is_scrum_master,
+        taskCount: own.length,
+        estHours: Math.round(estHours * 10) / 10,
+        actHours: Math.round(actHours * 10) / 10,
+        tasks: own
+      };
+    });
+
+    const scrumMaster = members.find(m => m.isScrumMaster) || null;
+    const deliveryRoster = (team ? team.deliveryTeam() : []).map(r => ({
+      name: r.employee_name,
+      designation: r.designation,
+      sprintRole: r.sprint_role,
+      resourceType: r.resource_type,
+      roleBadge: r.role_badge,
+      isDeliveryResource: true,
+      isScrumMaster: false
+    }));
+
+    return {
+      scrumMaster,
+      members,
+      deliveryRoster,
+      excludedFromCapacity: {
+        headcount: members.length,
+        taskCount: excludedTasks.length,
+        estHours: Math.round(members.reduce((s, m) => s + m.estHours, 0) * 10) / 10,
+        actHours: Math.round(members.reduce((s, m) => s + m.actHours, 0) * 10) / 10
+      }
+    };
+  }
+
+  /**
+   * Overall Sprint KPIs & Global RAG Calculation
+   * Only delivery resources contribute (is_delivery_resource = true).
+   */
+  static calculateSprintMetrics(allTasks, config) {
+    const tasks = this.deliveryTasks(allTasks);
     const totalTasks = tasks.length;
     let completed = 0;
     let inProgress = 0;
@@ -130,8 +229,11 @@ class SprintAnalytics {
 
   /**
    * Employee-Wise Analytics & Transparent Scoring Engine
+   * Scoped to delivery resources only; leadership roles are reported by
+   * buildLeadership() and never scored here.
    */
-  static calculateEmployeeMetrics(tasks, config, sprintMetrics) {
+  static calculateEmployeeMetrics(allTasks, config, sprintMetrics) {
+    const tasks = this.deliveryTasks(allTasks);
     const empMap = new Map();
 
     tasks.forEach(t => {
@@ -271,8 +373,16 @@ class SprintAnalytics {
         rag
       });
 
+      const profile = this.team() ? this.team().resolve(e.name) : null;
+
       employees.push({
         name: e.name,
+        designation: profile ? profile.designation : 'Unlisted Resource',
+        sprintRole: profile ? profile.sprint_role : 'Team Member',
+        resourceType: profile ? profile.resource_type : 'Delivery',
+        roleBadge: profile ? profile.role_badge : null,
+        isDeliveryResource: true,
+        isScrumMaster: false,
         totalAssigned: e.totalAssigned,
         completed: e.completed,
         inProgress: e.inProgress,
@@ -635,7 +745,7 @@ class SprintAnalytics {
     
     let effortText = `Total engineering effort recorded stood at **${totalAct}h** against a planned baseline of **${totalEst}h**, resulting in a net variance of **${variance >= 0 ? '+' : ''}${variance}h** and an aggregate team efficiency of **${efficiencyPct}%**.`;
 
-    let teamText = `Resource distribution across ${teamSize} active contributors showed ${greenEmployees} members maintaining optimal Green RAG velocity, while ${redEmployees} contributor(s) experienced delivery hurdles or severe capacity constraints.`;
+    let teamText = `Resource distribution across ${teamSize} active delivery resources showed ${greenEmployees} members maintaining optimal Green RAG velocity, while ${redEmployees} contributor(s) experienced delivery hurdles or severe capacity constraints.`;
 
     let riskText = criticalRisks.length > 0 
       ? `Management attention is immediately directed toward ${criticalRisks.length} critical blocker(s), most notably: "${criticalRisks[0].task}" assigned to ${criticalRisks[0].owner}.`
@@ -737,13 +847,17 @@ class SprintAnalytics {
       }
     ];
 
+    const leadership = this.buildLeadership(this.leadershipTasks(sprint.tasks || []));
+
     return {
       summary: this.generateExecutiveSummary(sprint, metrics, employees, risks),
+      sprintLeadership: leadership,
+      retrospectiveOwner: leadership.scrumMaster ? leadership.scrumMaster.name : 'Sprint Leadership',
       whatWentWell,
       whatDidNotGoWell,
       keyAchievements,
       bottlenecks,
-      resourceUtilizationSummary: `Team effort totaled ${metrics.totalAct}h across ${metrics.teamSize} active contributors. Average individual effort was ${(metrics.totalAct / (metrics.teamSize || 1)).toFixed(1)}h.`,
+      resourceUtilizationSummary: `Delivery-team effort totaled ${metrics.totalAct}h across ${metrics.teamSize} active delivery resources. Average individual effort was ${(metrics.totalAct / (metrics.teamSize || 1)).toFixed(1)}h. Sprint leadership hours are tracked separately and excluded from capacity.`,
       estimationAccuracySummary: `Planned: ${metrics.totalEst}h vs Actual: ${metrics.totalAct}h (Variance: ${metrics.variance >= 0 ? '+' : ''}${metrics.variance}h, Efficiency: ${metrics.efficiencyPct}%).`,
       recommendations,
       nextSprintActions

@@ -387,6 +387,19 @@ button, input, select, textarea,
   color: var(--accent-red);
 }
 
+.btn-link {
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  padding: 0;
+  font-size: 12px;
+  text-decoration: underline;
+}
+
+.btn-link:hover {
+  color: var(--accent-red);
+}
+
 .btn-outline:hover {
   background: var(--accent-red-bg);
 }
@@ -813,6 +826,72 @@ button, input, select, textarea,
   border-left: 3px solid var(--border-highlight);
 }
 
+/* Designation & Sprint Role Badges */
+.role-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 4px;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-subtle);
+  white-space: nowrap;
+}
+
+.role-badge-leadership {
+  color: var(--accent-red);
+  background: rgba(230, 57, 70, 0.15);
+  border-color: rgba(230, 57, 70, 0.4);
+}
+
+.team-role-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--bg-input);
+  border-left: 3px solid var(--border-highlight);
+}
+
+.team-role-row.is-leadership {
+  border-left-color: var(--accent-red);
+}
+
+.team-role-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.team-role-meta {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* Sprint Leadership Strip (overview / workload / retrospective) */
+.leadership-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--bg-input);
+  border-left: 3px solid var(--accent-red);
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.leadership-strip strong {
+  color: var(--text-primary);
+}
+
 /* Retrospective Sections */
 .retro-box {
   background: var(--bg-card);
@@ -954,6 +1033,183 @@ button, input, select, textarea,
   width: 48px;
   height: 48px;
   color: var(--accent-red);
+}
+
+.selected-file-name {
+  font-size: 13.5px;
+  color: var(--rag-green);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.or-separator {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.or-separator::before,
+.or-separator::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-subtle);
+}
+
+.or-separator span {
+  padding: 0 14px;
+}
+
+.gsheet-input-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gsheet-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.gsheet-message {
+  font-size: 12.5px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  display: none;
+}
+
+.gsheet-error {
+  background: rgba(230, 57, 70, 0.12);
+  border: 1px solid rgba(230, 57, 70, 0.45);
+  color: var(--accent-red);
+}
+
+.gsheet-success {
+  background: rgba(46, 196, 182, 0.12);
+  border: 1px solid rgba(46, 196, 182, 0.45);
+  color: var(--rag-green);
+}
+
+.gsheet-sheet-selection {
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.gsheet-sheet-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gsheet-sheet-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--bg-card);
+  cursor: pointer;
+  font-size: 13.5px;
+  color: var(--text-primary);
+  border: 1px solid transparent;
+}
+
+.gsheet-sheet-option:hover {
+  border-color: var(--accent-red);
+}
+
+.gsheet-sheet-option input[type="radio"] {
+  accent-color: var(--accent-red);
+}
+
+.upload-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px;
+  background: var(--bg-input);
+  border-radius: 8px;
+  font-size: 13.5px;
+  color: var(--text-secondary);
+}
+
+.spin-icon {
+  color: var(--accent-red);
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Google Sheet import preview */
+.gsheet-preview {
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--rag-green);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gsheet-preview-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.gsheet-preview-body {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 8px 20px;
+}
+
+.gsheet-preview-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12.5px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.gsheet-preview-key {
+  color: var(--text-muted);
+}
+
+.gsheet-preview-value {
+  font-weight: 700;
+  color: var(--text-primary);
+  text-align: right;
+}
+
+.upload-source-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 600;
 }
 
 /* Toast Notifications */

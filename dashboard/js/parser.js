@@ -120,21 +120,11 @@ class SprintParser {
   async parseFile(file) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      const isCsv = file.name.endsWith('.csv');
 
       reader.onload = (e) => {
         try {
           const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: 'array', cellDates: true, cellNF: false });
-          const firstSheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[firstSheetName];
-          
-          const raw2D = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
-          if (!raw2D || raw2D.length === 0) {
-            throw new Error('The uploaded file contains no data.');
-          }
-
-          this.processRawGrid(raw2D, file.name);
+          this._readWorkbook(data, file.name);
           resolve(this);
         } catch (err) {
           reject(err);
@@ -144,6 +134,32 @@ class SprintParser {
       reader.onerror = (err) => reject(err);
       reader.readAsArrayBuffer(file);
     });
+  }
+
+  /**
+   * Parse CSV text (e.g. from a Google Sheets export) into the same 2D grid.
+   */
+  parseCsvText(csvText, sourceName = 'Google Sheet') {
+    const bytes = new TextEncoder().encode(csvText);
+    this._readWorkbook(bytes, sourceName);
+    return this;
+  }
+
+  _readWorkbook(bytes, sourceName) {
+    const workbook = XLSX.read(bytes, { type: 'array', cellDates: true, cellNF: false });
+    if (!workbook || !workbook.SheetNames || workbook.SheetNames.length === 0) {
+      throw new Error('The uploaded file contains no data.');
+    }
+    const firstSheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[firstSheetName];
+
+    const raw2D = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+    if (!raw2D || raw2D.length === 0) {
+      throw new Error('The imported sheet contains no data.');
+    }
+
+    this.processRawGrid(raw2D, sourceName);
+    return this;
   }
 
   /**
