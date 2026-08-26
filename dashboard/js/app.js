@@ -27,6 +27,7 @@ class SprintIQApp {
     this.tasksPerPage = 10;
     this.projectPage = 1;
     this.projectsPerPage = 10;
+    this.loaderTimeout = null;
 
     this.init();
   }
@@ -51,6 +52,16 @@ class SprintIQApp {
     if (window.lucide) {
       window.lucide.createIcons();
     }
+  }
+
+  showPageLoader() {
+    const loader = document.getElementById('page-loader');
+    if (loader) loader.classList.add('active');
+  }
+
+  hidePageLoader() {
+    const loader = document.getElementById('page-loader');
+    if (loader) loader.classList.remove('active');
   }
 
   showToast(message, type = 'success') {
@@ -928,6 +939,8 @@ class SprintIQApp {
   }
 
   switchView(viewId) {
+    this.showPageLoader();
+
     this.currentView = viewId;
 
     // Update Sidebar active state
@@ -952,6 +965,10 @@ class SprintIQApp {
 
     this.renderActiveView();
     this.initIcons();
+
+    // Keep the loader visible for 2 seconds
+    if (this.loaderTimeout) clearTimeout(this.loaderTimeout);
+    this.loaderTimeout = setTimeout(() => this.hidePageLoader(), 2000);
   }
 
   renderActiveView() {
