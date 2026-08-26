@@ -264,7 +264,10 @@ class GoogleSheetParser {
 class GoogleSheetAdapter {
   static toSprint(parsed, spreadsheetId = '', sheetName = '') {
     const team = parsed.team || [];
-    const tasks = parsed.tasks || [];
+    const tasks = (parsed.tasks || []).map(t => {
+      const profile = window.SprintIQTeam ? window.SprintIQTeam.resolve(t.owner) : null;
+      return { ...t, owner: profile ? profile.employee_name : t.owner };
+    });
 
     const totalCapacity = team.reduce((s, m) => s + m.capacityHours, 0);
     const totalAllocated = tasks.reduce((s, t) => s + t.est, 0);

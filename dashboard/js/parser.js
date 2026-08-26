@@ -294,8 +294,11 @@ class SprintParser {
         return;
       }
 
-      const ownerStr = String(rawOwner || '').trim() || 'Unassigned';
-      if (ownerStr === 'Unassigned') missingFieldsCount++;
+      const rawOwnerName = String(rawOwner || '').trim() || 'Unassigned';
+      const team = window.SprintIQTeam;
+      const resolved = team ? team.resolve(rawOwnerName) : null;
+      const owner = resolved ? resolved.employee_name : rawOwnerName;
+      if (rawOwnerName === 'Unassigned') missingFieldsCount++;
 
       const estHours = SprintParser.normalizeHours(rawEst);
       const actHours = SprintParser.normalizeHours(rawAct);
@@ -303,14 +306,14 @@ class SprintParser {
       const status = SprintParser.normalizeStatus(rawStatus);
 
       // Check for duplicate items
-      const itemKey = `${itemStr.toLowerCase()}__${ownerStr.toLowerCase()}`;
+      const itemKey = `${itemStr.toLowerCase()}__${owner.toLowerCase()}`;
       let isDuplicate = false;
       if (seenItems.has(itemKey)) {
         isDuplicate = true;
         warnings.push({
           row: rowIdx + 1,
           type: 'duplicate',
-          message: `Duplicate task detected: "${itemStr}" assigned to ${ownerStr}.`
+          message: `Duplicate task detected: "${itemStr}" assigned to ${owner}.`
         });
       } else {
         seenItems.set(itemKey, true);
@@ -329,7 +332,7 @@ class SprintParser {
         id: rawId ? String(rawId).trim() : String(tasks.length + 1),
         item: itemStr,
         priority: priority,
-        owner: ownerStr,
+        owner: owner,
         est: estHours,
         act: actHours,
         status: status,

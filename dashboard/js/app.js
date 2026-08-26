@@ -191,7 +191,10 @@ class SprintIQApp {
       const team = window.SprintIQTeam;
       const owners = Array.from(new Set(allTasks.map(t => t.owner).filter(Boolean))).sort();
       ownerSelect.innerHTML = '<option value="">All Employees</option>' + owners.map(o => {
-        const label = team ? `${o} — ${team.designation(o)}` : o;
+        const profile = team ? team.resolve(o) : null;
+        const displayName = profile ? profile.employee_name : o;
+        const designation = profile ? profile.designation : 'Unlisted Resource';
+        const label = `${displayName} — ${designation}`;
         return `<option value="${o}" ${o === currentVal ? 'selected' : ''}>${label}</option>`;
       }).join('');
     }

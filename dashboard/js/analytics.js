@@ -237,7 +237,9 @@ class SprintAnalytics {
     const empMap = new Map();
 
     tasks.forEach(t => {
-      const owner = t.owner || 'Unassigned';
+      const rawOwner = t.owner || 'Unassigned';
+      const profile = this.team() ? this.team().resolve(rawOwner) : null;
+      const owner = profile ? profile.employee_name : rawOwner;
       if (!empMap.has(owner)) {
         empMap.set(owner, {
           name: owner,
