@@ -27,7 +27,6 @@ class SprintIQApp {
     this.tasksPerPage = 10;
     this.projectPage = 1;
     this.projectsPerPage = 10;
-    this.loaderTimeout = null;
 
     this.init();
   }
@@ -54,15 +53,6 @@ class SprintIQApp {
     }
   }
 
-  showPageLoader() {
-    const loader = document.getElementById('page-loader');
-    if (loader) loader.classList.add('active');
-  }
-
-  hidePageLoader() {
-    const loader = document.getElementById('page-loader');
-    if (loader) loader.classList.remove('active');
-  }
 
   showToast(message, type = 'success') {
     const container = document.getElementById('toast-container');
@@ -942,7 +932,7 @@ class SprintIQApp {
   }
 
   switchView(viewId) {
-    this.showPageLoader();
+    window.SprintIQLoader.show(3000);
 
     this.currentView = viewId;
 
@@ -968,10 +958,6 @@ class SprintIQApp {
 
     this.renderActiveView();
     this.initIcons();
-
-    // Keep the loader visible for 2 seconds
-    if (this.loaderTimeout) clearTimeout(this.loaderTimeout);
-    this.loaderTimeout = setTimeout(() => this.hidePageLoader(), 2000);
   }
 
   renderActiveView() {
@@ -1587,7 +1573,71 @@ class SprintIQApp {
   }
 }
 
+// Page Loader Utility
+window.SprintIQLoader = {
+  anim: null,
+  _hideTimer: null,
+  _doneCallback: null,
+  _isHiding: false,
+
+  init() {
+    const container = document.getElementById('lottie-loader');
+    if (!container) return;
+
+    if (typeof lottie === 'undefined') {
+      container.innerHTML = '<img src="assets/loading.gif" style="width:100%;height:100%;object-fit:contain;" alt="Loading">';
+      return;
+    }
+
+    this.anim = lottie.loadAnimation({
+      container: container,
+      renderer: 'svg',
+      loop: true,
+      autoplay: true,
+      path: 'assets/loading.json'
+    });
+
+    this.anim.addEventListener('data_failed', () => {
+      container.innerHTML = '<img src="assets/loading.gif" style="width:100%;height:100%;object-fit:contain;" alt="Loading">';
+    });
+  },
+
+  show(duration = 3000, onDone = null) {
+    const loader = document.getElementById('page-loader');
+    if (!loader) return;
+    clearTimeout(this._hideTimer);
+    this._doneCallback = onDone;
+    this._isHiding = false;
+    loader.classList.remove('fade-out');
+    loader.style.removeProperty('display');
+    loader.style.display = 'flex';
+    if (this.anim && typeof this.anim.goToAndPlay === 'function') {
+      this.anim.goToAndPlay(0, true);
+    }
+    this._hideTimer = setTimeout(() => this.hide(), duration);
+  },
+
+  hide() {
+    const loader = document.getElementById('page-loader');
+    if (!loader || this._isHiding) return;
+    this._isHiding = true;
+    loader.classList.add('fade-out');
+    setTimeout(() => {
+      loader.style.display = 'none';
+      this._isHiding = false;
+      if (typeof this._doneCallback === 'function') {
+        this._doneCallback();
+        this._doneCallback = null;
+      }
+    }, 600);
+  }
+};
+
 // Bootstrap on DOM Ready
 document.addEventListener('DOMContentLoaded', () => {
-  window.SprintIQ = new SprintIQApp();
+  window.SprintIQLoader.init();
+  window.SprintIQLoader.show(3000, () => {
+    document.body.classList.add('app-loaded');
+    window.SprintIQ = new SprintIQApp();
+  });
 });

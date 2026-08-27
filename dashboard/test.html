@@ -1,11 +1,72 @@
 <!DOCTYPE html>
 <html>
 <head><meta charset="UTF-8"><title>Dashboard tests</title>
+<style>
+  .page-loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #0e1117;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 1;
+    transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: opacity;
+  }
+  .page-loader.fade-out {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .page-loader.fade-out .lottie-loader {
+    transform: scale(0.92);
+  }
+  .lottie-loader {
+    width: 220px;
+    height: 220px;
+    transform: scale(1);
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+  }
+</style>
 <script src="vendor/chart.umd.min.js"></script>
 <script src="data.js"></script>
 <script src="pm_data.js"></script>
+<script src="vendor/lottie.min.js"></script>
 </head>
 <body>
+
+<!-- Page Loader -->
+<div id="page-loader" class="page-loader">
+  <div id="lottie-loader" class="lottie-loader"></div>
+</div>
+
+<script>
+(function () {
+  const loader = document.getElementById('page-loader');
+  const loaderContainer = document.getElementById('lottie-loader');
+
+  if (loaderContainer && typeof lottie !== 'undefined') {
+    lottie.loadAnimation({
+      container: loaderContainer,
+      renderer: 'svg',
+      loop: true,
+      autoplay: true,
+      path: 'assets/loading.json'
+    });
+  }
+
+  setTimeout(() => {
+    if (loader) {
+      loader.classList.add('fade-out');
+      setTimeout(() => { loader.style.display = 'none'; }, 600);
+    }
+  }, 3000);
+})();
+</script>
 <!-- minimal DOM mirroring index.html ids required by app.js -->
 <header class="topbar"><h1>t</h1><div class="sub"><b id="asof"></b><b id="srcfile"></b></div></header>
 <nav id="nav"></nav>
