@@ -37,7 +37,7 @@ class SprintAnalytics {
   /**
    * Main entry point to analyze a sprint with given tasks and config
    */
-  static analyzeSprint(sprint, config = window.SprintIQConfig.get()) {
+  static analyzeSprint(sprint, config = window.SprintIQConfig.get(), analysisVersion = null) {
     const allTasks = sprint.tasks || [];
     const tasks = this.deliveryTasks(allTasks);
     const excludedTasks = this.leadershipTasks(allTasks);
@@ -50,7 +50,7 @@ class SprintAnalytics {
     const riskRegister = this.identifyRisks(tasks, config, employeeMetrics, sprintMetrics);
     const leadership = this.buildLeadership(excludedTasks);
     const executiveSummary = this.generateExecutiveSummary(sprint, sprintMetrics, employeeMetrics, riskRegister);
-    const retrospective = this.generateRetrospective(sprint, sprintMetrics, employeeMetrics, riskRegister, projectMetrics);
+    const retrospective = this.generateValidatedRetrospective(sprint, sprintMetrics, employeeMetrics, riskRegister, projectMetrics, leadership, analysisVersion);
 
     return {
       sprint,
@@ -757,9 +757,324 @@ class SprintAnalytics {
   }
 
   /**
+   * Format an employee profile consistently.
+   */
+  static _formatEmployee(profile) {
+    if (!profile) return 'Unassigned';
+    return profile.employee_name + (profile.designation ? ` / ${profile.designation}` : '');
+  }
+
+  /**
+   * Build a deterministic snapshot of allowed values for retrospective generation.
+   */
+  static buildRetrospectiveSnapshot(sprint, metrics, employees, risks, projects, leadership) {
+    const team = this.team();
+    const deliveryTasks = this.deliveryTasks(sprint.tasks || []);
+    const allowedEmployeeNames = new Set();
+    const allowedEmployeeDisplay = new Set();
+
+    (employees || []).forEach(e => {
+      allowedEmployeeNames.add(e.name);
+      const r = team ? team.resolve(e.name) : null;
+      if (r && r.employee_name) allowedEmployeeDisplay.add(this._formatEmployee(r));
+    });
+
+    const members = (leadership && leadership.members) ? leadership.members : (leadership || []);
+    members.forEach(m => {
+      allowedEmployeeNames.add(m.name);
+      const r = team ? team.resolve(m.name) : null;
+      if (r && r.employee_name) allowedEmployeeDisplay.add(this._formatEmployee(r));
+    });
+
+    ['Sprint Leadership', 'Delivery Team', 'Team', 'Unassigned'].forEach(t => allowedEmployeeDisplay.add(t));
+
+    const allowedOwners = new Set(allowedEmployeeDisplay);
+    allowedEmployeeNames.forEach(n => allowedOwners.add(n));
+
+    const allowedTaskNames = new Set(deliveryTasks.map(t => t.item).filter(Boolean));
+    const allowedProjectNames = new Set((projects || []).map(p => p.name).filter(Boolean));
+    const allTaskItems = (sprint.tasks || []).map(t => t.item).filter(Boolean);
+    const nonAllowedTasks = allTaskItems.filter(item => !allowedTaskNames.has(item));
+
+    const allowedNumbers = new Set();
+    const addNum = (v) => {
+      if (typeof v !== 'number' || isNaN(v)) return;
+      allowedNumbers.add(String(v));
+      allowedNumbers.add(String(Math.round(v * 10) / 10));
+      allowedNumbers.add(String(Math.round(v)));
+      allowedNumbers.add(String(Math.floor(v)));
+      allowedNumbers.add(String(Math.ceil(v)));
+      if (v % 1 !== 0) allowedNumbers.add(String(Number(v).toFixed(1)));
+    };
+
+    const addNumericProps = (obj) => {
+      if (!obj) return;
+      Object.values(obj).forEach(v => {
+        if (typeof v === 'number') addNum(v);
+        if (Array.isArray(v)) v.forEach(x => { if (typeof x === 'number') addNum(x); });
+      });
+    };
+
+    addNumericProps(metrics);
+    (employees || []).forEach(addNumericProps);
+    (risks || []).forEach(addNumericProps);
+    (projects || []).forEach(addNumericProps);
+    members.forEach(addNumericProps);
+    deliveryTasks.forEach(addNumericProps);
+
+    // Per-task derived numbers used by risk descriptions
+    deliveryTasks.forEach(t => {
+      const v = (t.act || 0) - (t.est || 0);
+      addNum(v);
+      if (t.est > 0) {
+        addNum((v / t.est) * 100);
+        addNum(Math.round((v / t.est) * 100));
+      }
+    });
+
+    // Common constants and derived averages
+    addNum(100);
+    addNum(0);
+    if (metrics && metrics.teamSize > 0) {
+      const avg = metrics.totalAct / metrics.teamSize;
+      addNum(avg);
+      allowedNumbers.add(String(avg.toFixed(1)));
+    }
+    if (metrics) {
+      addNum(metrics.totalTasks - metrics.completed);
+    }
+    if (employees) {
+      addNum(employees.filter(e => e.rag === 'GREEN').length);
+      addNum(employees.filter(e => e.rag === 'RED').length);
+    }
+    if (risks) {
+      addNum(risks.filter(r => r.severity === 'Critical').length);
+    }
+
+    const allowedStatuses = new Set(deliveryTasks.map(t => String(t.status || 'pending').toLowerCase()));
+    ['completed', 'in progress', 'in_progress', 'blocked', 'pending', 'cancelled'].forEach(s => allowedStatuses.add(s));
+
+    const allowedPriorities = new Set(deliveryTasks.map(t => String(t.priority || 'medium').toLowerCase()));
+    ['high', 'medium', 'low', 'High', 'Medium', 'Low'].forEach(p => allowedPriorities.add(p));
+
+    const allowedRags = new Set(['GREEN', 'AMBER', 'RED', 'green', 'amber', 'red']);
+    if (metrics && metrics.rag) allowedRags.add(metrics.rag);
+    (employees || []).forEach(e => allowedRags.add(e.rag));
+    (projects || []).forEach(p => allowedRags.add(p.rag));
+    (risks || []).forEach(r => allowedRags.add(r.rag));
+
+    // Allow numeric tokens that appear inside task, project or employee display names
+    // (e.g. "88 Driving School", "DMA Phase 2", "Shopify E-Commerce 2024").
+    const addNumericTokens = (items) => {
+      (items || []).forEach(s => {
+        const matches = String(s).match(/\d+(\.\d+)?/g);
+        if (matches) matches.forEach(n => allowedNumbers.add(n));
+      });
+    };
+    addNumericTokens(allowedTaskNames);
+    addNumericTokens(allowedProjectNames);
+    addNumericTokens(allowedEmployeeNames);
+    addNumericTokens(allowedEmployeeDisplay);
+
+    const fullRoster = (team ? team.all() : []).map(r => r.employee_name);
+    const nonAllowedEmployees = fullRoster.filter(n => !allowedEmployeeNames.has(n) && !allowedEmployeeDisplay.has(n));
+
+    const allowedEmployeeTokens = new Set();
+    allowedEmployeeNames.forEach(n => allowedEmployeeTokens.add(String(n).toLowerCase()));
+    allowedEmployeeDisplay.forEach(d => d.split(/[^a-z0-9]+/i).forEach(tok => { if (tok) allowedEmployeeTokens.add(tok.toLowerCase()); }));
+    const nonAllowedEmployeeTokens = new Set(nonAllowedEmployees.map(n => String(n).toLowerCase()));
+
+    return {
+      sprintId: sprint && sprint.id,
+      timestamp: Date.now(),
+      allowedEmployeeNames: Array.from(allowedEmployeeNames).sort(),
+      allowedEmployeeDisplay: Array.from(allowedEmployeeDisplay).sort(),
+      allowedOwners: Array.from(allowedOwners).sort(),
+      allowedEmployeeTokens: Array.from(allowedEmployeeTokens).sort(),
+      nonAllowedEmployeeTokens: Array.from(nonAllowedEmployeeTokens).sort(),
+      allowedTaskNames: Array.from(allowedTaskNames).sort(),
+      allowedProjectNames: Array.from(allowedProjectNames).sort(),
+      allTaskItems,
+      nonAllowedTasks,
+      allowedNumbers: Array.from(allowedNumbers).sort(),
+      allowedStatuses: Array.from(allowedStatuses).sort(),
+      allowedPriorities: Array.from(allowedPriorities).sort(),
+      allowedRags: Array.from(allowedRags).sort()
+    };
+  }
+
+  /**
+   * Pre-validate that all required analysis inputs are present and consistent.
+   */
+  static preValidateSnapshot(sprint, metrics, employees, risks, projects, leadership) {
+    const errors = [];
+    if (!sprint || !sprint.id) errors.push('Sprint is missing or has no id.');
+    if (!metrics) errors.push('Metrics input is missing.');
+    if (!Array.isArray(employees)) errors.push('Employees input must be an array.');
+    if (!Array.isArray(risks)) errors.push('Risks input must be an array.');
+    if (!Array.isArray(projects)) errors.push('Projects input must be an array.');
+    if (!leadership || !Array.isArray(leadership.members)) errors.push('Leadership input is missing members.');
+
+    if (sprint && sprint.tasks && projects) {
+      const allTaskKeys = new Set((sprint.tasks || []).map(t => t.id || t.item).filter(Boolean));
+      projects.forEach((p, i) => {
+        (p.tasks || []).forEach(t => {
+          const key = t.id || t.item;
+          if (key && !allTaskKeys.has(key)) {
+            errors.push(`Project ${i} references task not in sprint: ${key}`);
+          }
+        });
+      });
+    }
+
+    return { ok: errors.length === 0, errors };
+  }
+
+  /**
+   * Post-validate a generated retrospective against the allowed snapshot.
+   */
+  static postValidateGeneratedRetrospective(retrospective, snapshot) {
+    if (!retrospective || !snapshot) {
+      return { status: 'FAILED', errors: ['Retrospective or snapshot missing.'] };
+    }
+
+    const errors = [];
+
+    const isAllowedNumber = (n) => {
+      const f = parseFloat(n);
+      const cands = [String(f), String(Math.round(f * 10) / 10), String(Math.round(f)), String(Math.floor(f)), String(Math.ceil(f))];
+      if (f % 1 !== 0) cands.push(String(f.toFixed(1)));
+      return cands.some(c => snapshot.allowedNumbers.includes(c));
+    };
+
+    const visit = (val, path) => {
+      if (val === null || val === undefined) return;
+      if (path.startsWith('sprintLeadership')) return;
+      if (path.startsWith('__')) return;
+      if (Array.isArray(val)) {
+        val.forEach((v, i) => visit(v, `${path}[${i}]`));
+        return;
+      }
+      if (typeof val === 'object') {
+        Object.entries(val).forEach(([k, v]) => visit(v, path ? `${path}.${k}` : k));
+        return;
+      }
+      if (typeof val === 'number') {
+        if (!isAllowedNumber(String(val))) {
+          errors.push(`${path}: disallowed number ${val}`);
+        }
+        return;
+      }
+      if (typeof val === 'string') {
+        const lower = val.toLowerCase();
+
+        const words = lower.split(/[\s.,;:!?(){}[\]\/\\'"|&*+~–—\-]+/).filter(Boolean);
+        (snapshot.nonAllowedEmployeeTokens || []).forEach(tok => {
+          if (words.includes(tok)) errors.push(`${path}: contains non-allowed employee name "${tok}"`);
+        });
+
+        (snapshot.nonAllowedTasks || []).forEach(item => {
+          if (lower.includes(String(item).toLowerCase())) {
+            errors.push(`${path}: contains non-allowed task/project "${item}"`);
+          }
+        });
+
+        if (path.endsWith('.owner')) {
+          const parts = val.split(/\s*,\s*|\s+&\s+/);
+          parts.forEach(part => {
+            if (!snapshot.allowedOwners.some(o => o.toLowerCase() === part.toLowerCase())) {
+              errors.push(`${path}: owner "${part}" not in allowed set`);
+            }
+          });
+        }
+
+        if (path.endsWith('.priority')) {
+          if (!snapshot.allowedPriorities.some(p => String(p).toLowerCase() === val.toLowerCase())) {
+            errors.push(`${path}: disallowed priority "${val}"`);
+          }
+        }
+
+        const numberMatches = val.match(/[-+]?\d+(\.\d+)?/g) || [];
+        numberMatches.forEach(n => {
+          if (!isAllowedNumber(n)) {
+            errors.push(`${path}: string contains disallowed number ${n}`);
+          }
+        });
+      }
+    };
+
+    visit(retrospective, '');
+
+    return { status: errors.length === 0 ? 'PASSED' : 'FAILED', errors };
+  }
+
+  /**
+   * Build an empty retrospective shell when validation fails.
+   */
+  static _emptyRetrospective(snapshot, status, validationErrors, analysisVersion) {
+    return {
+      summary: 'Retrospective could not be generated because input validation failed.',
+      sprintLeadership: { scrumMaster: null, members: [], deliveryRoster: [], excludedFromCapacity: { headcount: 0, taskCount: 0, estHours: 0, actHours: 0 } },
+      retrospectiveOwner: 'Sprint Leadership',
+      whatWentWell: [],
+      whatDidNotGoWell: [],
+      keyAchievements: [],
+      bottlenecks: [],
+      resourceUtilizationSummary: '',
+      estimationAccuracySummary: '',
+      recommendations: [],
+      nextSprintActions: [],
+      __validationStatus: status,
+      __validationErrors: validationErrors,
+      __snapshot: snapshot,
+      __analysisVersion: analysisVersion || (snapshot && snapshot.timestamp) || Date.now()
+    };
+  }
+
+  /**
+   * Build, pre-validate, generate, post-validate and wrap a retrospective.
+   */
+  static generateValidatedRetrospective(sprint, metrics, employees, risks, projects, leadership, analysisVersion = null) {
+    const snapshot = this.buildRetrospectiveSnapshot(sprint, metrics, employees, risks, projects, leadership);
+    const pre = this.preValidateSnapshot(sprint, metrics, employees, risks, projects, leadership);
+
+    let content, post;
+    if (!pre.ok) {
+      content = this._emptyRetrospective(snapshot, 'PRE_VALIDATION_FAILED', pre.errors, analysisVersion);
+      post = { status: 'FAILED', errors: pre.errors };
+    } else {
+      content = this.generateRetrospective(sprint, metrics, employees, risks, projects, leadership);
+      post = this.postValidateGeneratedRetrospective(content, snapshot);
+
+      if (post.status !== 'PASSED') {
+        const retry = this.generateRetrospective(sprint, metrics, employees, risks, projects, leadership);
+        const retryPost = this.postValidateGeneratedRetrospective(retry, snapshot);
+        if (retryPost.status === 'PASSED') {
+          content = retry;
+          post = retryPost;
+        }
+      }
+    }
+
+    content.__validationStatus = post.status;
+    content.__validationErrors = post.errors;
+    content.__snapshot = snapshot;
+    content.__analysisVersion = analysisVersion || snapshot.timestamp;
+    return content;
+  }
+
+  /**
    * Complete Sprint Retrospective Generator
    */
-  static generateRetrospective(sprint, metrics, employees, risks, projects) {
+  static generateRetrospective(sprint, metrics, employees, risks, projects, leadership = null) {
+    const fmt = (raw) => {
+      const p = this.team() ? this.team().resolve(raw) : null;
+      if (p && p.employee_name) {
+        return p.employee_name + (p.designation ? ` / ${p.designation}` : '');
+      }
+      return raw || 'Unassigned';
+    };
+
     // What Went Well
     const whatWentWell = [];
     if (metrics.completionPct >= 85) {
@@ -804,7 +1119,8 @@ class SprintAnalytics {
     const keyAchievements = [];
     const completedHigh = projects.flatMap(p => p.tasks).filter(t => (t.priority || '').toLowerCase() === 'high' && (t.status || '').toLowerCase() === 'completed');
     completedHigh.slice(0, 5).forEach(t => {
-      keyAchievements.push(`Successfully delivered high-priority milestone: "${t.item}" by ${t.owner}.`);
+      const ownerDisplay = fmt(t.owner);
+      keyAchievements.push(`Successfully delivered high-priority milestone: "${t.item}" by ${ownerDisplay}.`);
     });
     if (keyAchievements.length === 0) {
       keyAchievements.push(`Maintained active development pace with ${metrics.completed} deliverables resolved.`);
@@ -813,48 +1129,87 @@ class SprintAnalytics {
     // Challenges & Bottlenecks
     const bottlenecks = risks.map(r => `${r.type}: ${r.description}`);
 
-    // Recommended Improvements
-    const recommendations = [
-      'Refine task estimation granularity during sprint planning to cap single task estimates at 20h maximum.',
-      'Establish a mandatory daily 15-minute blocker triage to resolve third-party API dependencies early.',
-      'Rebalance workload distribution to maintain individual developer load within ±25% of team average.',
-      'Introduce paired reviews on complex client custom CRM integrations prior to final QA.'
-    ];
+    // Recommended Improvements (data-driven from actual sprint metrics and risks)
+    const recommendations = [];
+    if (metrics.blocked > 0) {
+      const blockedTasks = this.deliveryTasks(sprint.tasks || []).filter(t => (t.status || '').toLowerCase() === 'blocked');
+      const owners = [...new Set(blockedTasks.map(t => fmt(t.owner)))].slice(0, 3).join(', ');
+      recommendations.push(`Run a focused daily dependency triage for the ${metrics.blocked} blocked task(s)${owners ? ` owned by ${owners}` : ''}.`);
+    }
+    if (overloadedEmps.length > 0) {
+      const names = overloadedEmps.slice(0, 3).map(e => e.name).join(', ');
+      recommendations.push(`Rebalance workload for ${names} to keep individual utilization within a healthy range of the team average.`);
+    }
+    if (overruns.length > 0) {
+      const names = overruns.slice(0, 2).map(p => p.name).join(' and ');
+      recommendations.push(`Re-estimate in-flight items in ${names} and revise sprint planning baselines.`);
+    }
+    if (metrics.completionPct < 80) {
+      recommendations.push(`Defer or split ${metrics.totalTasks - metrics.completed} incomplete deliverables into the next sprint with re-committed scope.`);
+    }
+    if (recommendations.length === 0) {
+      recommendations.push('Maintain current estimation and delivery practices; no major process adjustments required.');
+    }
 
-    // Next Sprint Action Items
-    const nextSprintActions = [
-      {
-        action: 'Unblock and finalize SPARTA CRM webhook & reporting integrations',
-        owner: 'Avinash / PM Lead',
-        priority: 'High',
-        outcome: 'Production API operational with verified automated sync'
-      },
-      {
-        action: 'Conduct workload leveling session for Vee Repairs & Custom Web streams',
-        owner: 'Abhijeet / Delivery Mgr',
-        priority: 'High',
-        outcome: 'Balanced sprint backlog with capped per-developer utilization'
-      },
-      {
-        action: 'Re-estimate in-flight portal tasks for Optimum Global Care & Sofiya Design',
-        owner: 'Aman / Shivam',
-        priority: 'Medium',
-        outcome: 'Refined task definitions and realistic milestone targets'
-      },
-      {
-        action: 'Establish standardized QA checklist for client Shopify checkout releases',
-        owner: 'Suraj / QA Lead',
-        priority: 'Medium',
-        outcome: 'Zero critical defects on payment & checkout releases'
-      }
-    ];
+    // Next Sprint Action Items (data-driven from actual blocked, in-flight, overloaded and high-variance items)
+    const nextSprintActions = [];
+    const deliveryTasks = this.deliveryTasks(sprint.tasks || []);
 
-    const leadership = this.buildLeadership(this.leadershipTasks(sprint.tasks || []));
+    deliveryTasks.filter(t => (t.status || '').toLowerCase() === 'blocked').slice(0, 2).forEach(t => {
+      nextSprintActions.push({
+        action: `Unblock and complete: ${t.item}`,
+        owner: fmt(t.owner),
+        priority: 'High',
+        outcome: `Dependency resolved and ${t.item} delivered`
+      });
+    });
+
+    deliveryTasks.filter(t =>
+      (t.priority || '').toLowerCase() === 'high' &&
+      ((t.status || '').toLowerCase() === 'in progress' || (t.status || '').toLowerCase() === 'in_progress')
+    ).slice(0, 2).forEach(t => {
+      nextSprintActions.push({
+        action: `Complete high-priority item: ${t.item}`,
+        owner: fmt(t.owner),
+        priority: 'High',
+        outcome: `High-priority milestone closed within the next sprint`
+      });
+    });
+
+    overloadedEmps.slice(0, 2).forEach(e => {
+      nextSprintActions.push({
+        action: `Rebalance workload for ${e.name}`,
+        owner: e.name,
+        priority: 'Medium',
+        outcome: `Individual load redistributed within a healthy range of the team average`
+      });
+    });
+
+    projects.filter(p => p.variancePct > 20).slice(0, 2).forEach(p => {
+      const owners = (p.assignedOwners || []).map(o => fmt(o)).filter(Boolean).slice(0, 2).join(', ') || 'Delivery Team';
+      nextSprintActions.push({
+        action: `Re-estimate and review: ${p.name}`,
+        owner: owners,
+        priority: 'Medium',
+        outcome: `Corrected baselines and realistic targets set for ${p.name}`
+      });
+    });
+
+    if (nextSprintActions.length === 0) {
+      nextSprintActions.push({
+        action: 'Review sprint commitments and confirm next-sprint priorities',
+        owner: 'Sprint Leadership',
+        priority: 'Medium',
+        outcome: 'Next sprint backlog finalized and accepted by the team'
+      });
+    }
+
+    const retrospectiveLeadership = leadership || this.buildLeadership(this.leadershipTasks(sprint.tasks || []));
 
     return {
       summary: this.generateExecutiveSummary(sprint, metrics, employees, risks),
-      sprintLeadership: leadership,
-      retrospectiveOwner: leadership.scrumMaster ? leadership.scrumMaster.name : 'Sprint Leadership',
+      sprintLeadership: retrospectiveLeadership,
+      retrospectiveOwner: retrospectiveLeadership.scrumMaster ? retrospectiveLeadership.scrumMaster.name : 'Sprint Leadership',
       whatWentWell,
       whatDidNotGoWell,
       keyAchievements,

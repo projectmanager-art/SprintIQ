@@ -160,7 +160,15 @@ class SprintIQApp {
       tasks: filteredTasks
     };
 
-    this.activeAnalysis = window.SprintAnalytics.analyzeSprint(filteredSprint, window.SprintIQConfig.get());
+    this.analysisVersion = Date.now();
+    this.activeAnalysis = window.SprintAnalytics.analyzeSprint(filteredSprint, window.SprintIQConfig.get(), this.analysisVersion);
+
+    if (this.activeAnalysis && this.activeAnalysis.retrospective) {
+      if (this.activeAnalysis.retrospective.__analysisVersion !== this.analysisVersion) {
+        this.activeAnalysis.retrospective.__validationStatus = 'FAILED';
+        this.activeAnalysis.retrospective.__validationErrors = ['Retrospective analysisVersion is stale or does not match.'];
+      }
+    }
 
     // Update filter dropdown options based on master sprint tasks
     this.populateFilterDropdowns(sprint.tasks || []);
@@ -229,15 +237,6 @@ class SprintIQApp {
         this.switchView(targetView);
       });
     });
-
-    // Hamburger Sidebar Toggle
-    const sidebar = document.getElementById('app-sidebar');
-    const sidebarToggle = document.getElementById('sidebar-toggle');
-    if (sidebarToggle && sidebar) {
-      sidebarToggle.addEventListener('click', () => {
-        sidebar.classList.toggle('open');
-      });
-    }
 
     // Sprint Select
     const sprintSelect = document.getElementById('active-sprint-select');
@@ -1493,6 +1492,32 @@ class SprintIQApp {
    */
   renderRetrospective() {
     const { retrospective, leadership } = this.activeAnalysis;
+
+    const panel = document.getElementById('view-retrospective');
+    const isStale = this.analysisVersion && retrospective.__analysisVersion !== this.analysisVersion;
+    const isInvalid = !retrospective.__validationStatus || retrospective.__validationStatus !== 'PASSED' || isStale;
+
+    const existing = panel ? panel.querySelector('.retro-validation-error') : null;
+    if (existing) existing.remove();
+    const card = panel ? panel.querySelector('.card') : null;
+    if (card) card.style.removeProperty('display');
+
+    if (isInvalid) {
+      const errors = (retrospective.__validationErrors || []).map(e => `<li>${e}</li>`).join('');
+      const staleNote = isStale ? '<p><strong>Analysis version mismatch:</strong> Retrospective is stale. Re-run analysis.</p>' : '';
+      const banner = document.createElement('div');
+      banner.className = 'retro-validation-error';
+      banner.style.cssText = 'background: var(--accent-red); color: #fff; padding: 16px 20px; border-radius: 8px; margin: 0 0 16px 0; font-size: 13px; line-height: 1.5;';
+      banner.innerHTML = `
+        <h4 style="margin: 0 0 8px 0; font-size: 14px;"><i data-lucide="alert-octagon"></i> Retrospective Validation Failed</h4>
+        ${staleNote}
+        ${errors ? `<ul style="margin: 0; padding-left: 18px;">${errors}</ul>` : '<p>The generated retrospective did not pass validation or is stale and cannot be displayed.</p>'}
+      `;
+      if (panel) panel.insertBefore(banner, panel.firstChild);
+      if (card) card.style.display = 'none';
+      this.initIcons();
+      return;
+    }
 
     const leadBox = document.getElementById('retro-leadership-box');
     if (leadBox) {
