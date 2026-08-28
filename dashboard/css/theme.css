@@ -1405,6 +1405,66 @@ button, input, select, textarea,
   }
 }
 
+/* Mobile Navigation Toggle & Off-Canvas Sidebar */
+.mobile-nav-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 0;
+  margin-right: 8px;
+}
+
+.mobile-nav-toggle svg {
+  width: 22px;
+  height: 22px;
+}
+
+@media (max-width: 768px) {
+  .mobile-nav-toggle {
+    display: inline-flex;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 260px;
+    height: 100vh;
+    max-height: 100vh;
+    min-height: auto;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: 110;
+    border-right: 1px solid var(--border-subtle);
+    border-bottom: none;
+    padding: 0;
+    overflow-y: auto;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .sidebar-brand {
+    padding: 20px;
+  }
+
+  .sidebar.open .sidebar-nav {
+    max-height: calc(100vh - 180px);
+  }
+
+  .main-content {
+    margin-left: 0;
+  }
+}
+
 /* Page Loader */
 .page-loader {
   position: fixed;

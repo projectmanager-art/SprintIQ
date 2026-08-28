@@ -230,13 +230,25 @@ class SprintIQApp {
 
   bindEvents() {
     // Navigation Links
+    const sidebar = document.getElementById('app-sidebar');
     document.querySelectorAll('.nav-link').forEach(link => {
       link.addEventListener('click', (e) => {
         e.preventDefault();
         const targetView = link.getAttribute('data-view');
         this.switchView(targetView);
+        if (sidebar && window.innerWidth <= 768) {
+          sidebar.classList.remove('open');
+        }
       });
     });
+
+    // Mobile Sidebar Toggle
+    const mobileToggle = document.getElementById('mobile-nav-toggle');
+    if (mobileToggle && sidebar) {
+      mobileToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('open');
+      });
+    }
 
     // Sprint Select
     const sprintSelect = document.getElementById('active-sprint-select');
